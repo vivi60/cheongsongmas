@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>게임 보드</title>
+    <title>게임 보드 - 클래식 UI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,496 +11,344 @@
     <style>
         :root {
             --bg-primary: #1c1c1b;
-            --bg-secondary: #1c1c1b;
-            --bg-tertiary: #374151;
-            --bg-board: rgba(36, 36, 36, 0.5);
+            --bg-secondary: #262625;
             --border-primary: #D4B783;
-            --border-secondary: #4b5563;
+            --accent-primary: #D4B783;
             --text-primary: #EAEAEA;
             --text-secondary: #B0B0C0;
-            --text-tertiary: #888899;
-            --accent-primary: #D4B783;
-            --accent-secondary: #C1A26C;
-            --modal-backdrop: rgba(0, 0, 0, 0.8);
             --log-move: #60A5FA;
             --log-damage: #F87171;
             --log-heal: #4ADE80; 
             --log-system: #FBBF24;
-            --log-join: #4ADE80;
-            --log-admin: #9333ea;
-            --turn-highlight-color: #caa954;
-            --bg-game-id: #1f2937;
-            --bg-selection-overlay: linear-gradient(180deg, var(--bg-primary) 0%, rgba(36, 36, 36, 0.7) 100%);
-            --mp-color: #3B82F6;
-            --scrollbar-thumb: var(--accent-primary);
-            --scrollbar-track: #2d2d2d;
-            --skill-ring-color: rgba(212, 183, 131, 0.8);
-            --turn-box-bg: rgba(55, 65, 81, 0.5); 
-            --turn-box-border: var(--accent-primary);
-            --summary-box-bg: rgba(212, 183, 131, 0.1);
-            --gradient-start: #ffffff; 
-            --gradient-end: var(--accent-primary);
-            --pc-color: #4ADE80;
-            --enemy-color: #F87171;
         }
 
-        html.light {
-            --bg-primary: #FDFBF6;
-            --bg-secondary: #FFFFFF;
-            --bg-tertiary: #E5E7EB;
-            --bg-board: rgba(229, 231, 235, 0.8);
-            --border-primary: #8C6A48;
-            --border-secondary: #D1D5DB;
-            --text-primary: #3A3226;
-            --text-secondary: #574B3A;
-            --text-tertiary: #6B7280;
-            --accent-primary: #8C6A48;
-            --accent-secondary: #A98A66;
-            --turn-highlight-color: #D97706;
-            --log-admin: #6D28D9;
-            --bg-game-id: #E5E7EB;
-            --bg-selection-overlay: linear-gradient(180deg, var(--bg-primary) 0%, rgba(229, 231, 235, 0.7) 100%);
-            --mp-color: #1D4ED8;
-            --scrollbar-thumb: var(--accent-primary);
-            --scrollbar-track: #F0F0F0;
-            --skill-ring-color: rgba(140, 106, 72, 0.8);
-            --turn-box-bg: rgba(229, 231, 235, 0.5); 
-            --turn-box-border: var(--accent-primary);
-            --summary-box-bg: rgba(140, 106, 72, 0.1);
-            --gradient-start: #3A3226; 
-            --gradient-end: #000000;
-            --pc-color: #16A34A;
-            --enemy-color: #DC2626;
-        }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; opacity: 0.7; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-secondary); }
-        
         body {
             font-family: 'Noto Sans KR', sans-serif;
             background-color: var(--bg-primary);
             color: var(--text-primary);
-            transition: background-color 0.3s, color 0.3s;
-            background-size: cover; 
-            background-position: center; 
-            background-repeat: no-repeat;
-            background-attachment: fixed; 
-            padding-top: 250px;
+            padding-top: 260px;
         }
         
-        body, h1, h2, h3, h4, button, .font-title { font-family: 'Cinzel', 'Noto Sans KR', serif; letter-spacing: 0.5px; }
+        h1, h2, h3, button, .font-title { font-family: 'Cinzel', serif; letter-spacing: 1px; }
 
+        /* --- Panels --- */
+        .panel { 
+            background-color: var(--bg-secondary); 
+            border: 1px solid #444; 
+            border-top: 2px solid var(--border-primary);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- Board --- */
         #game-board {
             display: grid;
             grid-template-columns: repeat(10, minmax(0, 1fr));
             grid-template-rows: repeat(10, minmax(0, 1fr));
             width: 100%; aspect-ratio: 1 / 1;
-            max-width: 90vw; max-height: 90vh;
-            background-color: var(--bg-board);
-            border: 1px solid var(--border-secondary);
-            background-size: cover; background-position: center;
+            max-width: 85vh;
+            background-color: rgba(0,0,0,0.3);
+            border: 1px solid #555;
         }
-        .cell { border: 1px solid var(--border-secondary); position: relative; transition: background-color 0.2s; }
+        .cell { border: 0.5px solid rgba(212, 183, 131, 0.2); position: relative; }
         .cell:hover { background-color: rgba(212, 183, 131, 0.1); }
-        .cell.tile-obstacle { background-color: #4B5563; background-image: repeating-linear-gradient(45deg, rgba(0,0,0,.1) 0, rgba(0,0,0,.1) 2px, transparent 0, transparent 5px); cursor: not-allowed; }
-        .cell.tile-damage { background-color: #991B1B; box-shadow: inset 0 0 10px rgba(248, 100, 100, 0.5); cursor: help; }
-        .combat-range { outline: 2px solid transparent; outline-offset: -2px; transition: outline 0.2s, background-color 0.2s, box-shadow 0.2s; box-shadow: inset 0 0 12px; }
-        .attack-range-move { background-color: rgba(212, 183, 131, 0.05); outline-color: var(--accent-primary); box-shadow: inset 0 0 12px var(--accent-primary); }
-        .attack-range-skill { background-color: rgba(239, 68, 68, 0.05); outline-color: var(--log-damage); box-shadow: inset 0 0 12px var(--log-damage); }
-        .heal-range-skill { background-color: rgba(74, 222, 128, 0.08); outline-color: var(--log-heal); box-shadow: inset 0 0 12px var(--log-heal); }
-        .threat-range-foreshadow { background-color: rgba(239, 68, 68, 0.25); outline: 1px solid rgba(239, 68, 68, 0.5); outline-offset: -1px; }
+        .cell.tile-obstacle { background-color: #333; opacity: 0.8; cursor: not-allowed; }
+        .cell.tile-damage { background-color: rgba(153, 27, 27, 0.4); box-shadow: inset 0 0 10px red; }
 
-        @keyframes turn-glow { 0%, 100% { box-shadow: 0 0 8px 2px var(--turn-highlight-color); } 50% { box-shadow: 0 0 16px 5px var(--turn-highlight-color); } }
-        .character-token { width: 100%; height: 100%; background-size: cover; background-position: center; border-radius: 50%; cursor: pointer; transition: transform 0.2s ease-in-out; position: absolute; z-index: 20; border: 2px solid transparent; }
-        .character-token.current-turn-glow { border-color: var(--turn-highlight-color); }
-        .character-token.current-turn-glow::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; z-index: -1; animation: turn-glow 3s infinite ease-in-out; }
+        /* --- Tokens --- */
+        .character-token { 
+            width: 90%; height: 90%; 
+            margin: 5%;
+            background-size: cover; background-position: center; 
+            border-radius: 50%; border: 2px solid transparent;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+            position: absolute; z-index: 20;
+        }
+        .character-token.selected { border-color: var(--accent-primary); box-shadow: 0 0 15px var(--accent-primary); }
+        .enemy-token { border-color: #ef4444; }
+
+        /* --- UI Elements --- */
+        .skill-btn { 
+            background: linear-gradient(to bottom, #333, #111);
+            border: 1px solid var(--border-primary);
+            color: var(--accent-primary);
+            padding: 8px 12px; font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .skill-btn:hover { background: var(--accent-primary); color: black; }
         
-        /* UI Panels & Modals */
-        .panel { background-color: var(--bg-secondary); border: 1px solid var(--border-secondary); box-shadow: 0 0 15px rgba(0,0,0, 0.2); }
-        .modal-content { background-color: var(--bg-secondary); border: 1px solid var(--border-secondary); }
-        .modal-backdrop { background-color: var(--modal-backdrop); backdrop-filter: blur(2px); }
-        .skill-btn { border-radius: 9999px; padding: 0.5rem 1rem; transition: all 0.3s ease; background-color: transparent; color: var(--text-primary); font-weight: bold; border: 1px solid var(--accent-primary); }
-        .char-card-item { width: 150px; height: 200px; min-width: 150px; border-radius: 16px; overflow: hidden; position: relative; background-size: cover; background-position: center top; transition: all 0.3s ease; border: 1px solid var(--border-secondary); }
-        .summary-count { font-size: 3rem; font-weight: 700; background-clip: text; -webkit-background-clip: text; color: transparent; }
-        #pc-count.summary-count { background-image: linear-gradient(180deg, var(--gradient-start), var(--pc-color)); }
-        #enemy-count.summary-count { background-image: linear-gradient(180deg, var(--gradient-start), var(--enemy-color)); }
+        #character-selection-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 240px;
+            background: rgba(20, 20, 20, 0.95);
+            border-bottom: 2px solid var(--border-primary);
+            z-index: 100; transition: transform 0.3s;
+        }
+        #character-selection-overlay.collapsed { transform: translateY(-230px); }
 
-        .combat-text { position: fixed; font-size: 1.5rem; font-weight: bold; pointer-events: none; z-index: 110; text-shadow: 0 0 5px black; animation: float-up-and-fade 1.5s ease-out forwards; }
-        .combat-text.damage { color: #F87171; }
-        .combat-text.heal { color: #4ADE80; }
-        @keyframes float-up-and-fade { 0% { transform: translate(-50%, -50%); opacity: 1; } 100% { transform: translate(-50%, -150%); opacity: 0; } }
+        .hp-bar-small { position: absolute; bottom: -5px; left: 10%; width: 80%; height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
+        .hp-fill-small { height: 100%; background: #ef4444; transition: width 0.3s; }
 
-        #character-selection-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 250px; background: var(--bg-selection-overlay); backdrop-filter: blur(4px); z-index: 40; border-bottom: 1px solid var(--border-secondary); transition: height 0.3s; }
-        #character-selection-overlay.collapsed { height: 1rem; }
+        #game-log-list li { border-left: 2px solid var(--border-primary); padding-left: 8px; margin-bottom: 4px; }
+        .log-damage { color: var(--log-damage); }
+        .log-heal { color: var(--log-heal); }
+        .log-system { color: var(--log-system); font-weight: bold; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4 overflow-x-hidden">
+<body>
 
-    <div id="turn-announcement-backdrop" class="fixed inset-0 bg-black/70 z-[100] hidden opacity-0 transition-opacity duration-500"></div>
-    <div id="turn-announcement" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] hidden text-center"></div>
-
-    <div id="utility-controls" class="fixed bottom-4 right-4 flex gap-2 z-50">
-        <button id="login-status-btn" class="info-button p-3 rounded-full hidden bg-gray-700 text-white">상태</button>
-        <button id="user-info-btn" class="info-button p-3 rounded-full bg-gray-700 text-white">정보</button>
-        <button id="theme-toggle-btn" class="info-button p-3 rounded-full bg-gray-700 text-white">테마</button>
-        <button id="admin-panel-btn" class="p-3 rounded-full font-bold shadow-lg" style="background-color: var(--accent-primary); color: var(--bg-primary);">관리</button>
+    <div id="character-selection-overlay" class="flex flex-col">
+        <div id="selection-list" class="flex p-6 gap-4 overflow-x-auto h-full items-center">
+            </div>
+        <button id="overlay-toggle" class="self-center bg-zinc-800 border-x border-b border-gold px-4 py-1 text-xs text-gold rounded-b" style="border-color: var(--border-primary); color: var(--accent-primary);">
+            PANEL TOGGLE
+        </button>
     </div>
 
-    <div id="game-lobby-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[100]">
-        <div class="modal-content rounded-md shadow-2xl p-8 w-full max-w-md">
-            <h2 class="text-3xl font-bold mb-6 text-center" style="color: var(--accent-primary);">게임 참가</h2>
-            <div class="space-y-4">
-                <button id="create-game-btn" class="w-full bg-green-600 text-white font-bold py-3">새 게임 만들기</button>
-                <div class="flex items-center"><hr class="flex-grow border-gray-600"><span class="px-4 text-gray-400">또는</span><hr class="flex-grow border-gray-600"></div>
+    <div class="max-w-[1600px] mx-auto px-4 flex flex-col lg:flex-row gap-6">
+        
+        <div class="panel lg:w-1/4 p-5 flex flex-col gap-4">
+            <h2 class="text-xl font-bold text-center border-b border-zinc-700 pb-2">STATUS</h2>
+            <div class="grid grid-cols-2 gap-2 text-center">
+                <div class="bg-black/30 p-2 border border-zinc-800">
+                    <p class="text-[10px] text-zinc-500 uppercase">Allies</p>
+                    <span id="pc-count" class="text-3xl font-bold text-emerald-500">0</span>
+                </div>
+                <div class="bg-black/30 p-2 border border-zinc-800">
+                    <p class="text-[10px] text-zinc-500 uppercase">Enemies</p>
+                    <span id="enemy-count" class="text-3xl font-bold text-rose-500">0</span>
+                </div>
+            </div>
+
+            <div id="turn-display" class="py-3 px-4 bg-zinc-900 border border-zinc-800 text-center">
+                <p class="text-xs text-zinc-500 mb-1 uppercase">Current Turn</p>
+                <div id="current-turn-char" class="text-lg font-bold text-gold" style="color: var(--accent-primary);">준비 중...</div>
+            </div>
+
+            <div id="skill-controls" class="flex flex-col gap-2 min-h-[100px]">
+                </div>
+
+            <div id="character-list" class="flex-grow overflow-y-auto max-h-[300px] border-t border-zinc-800 pt-4 space-y-2">
+                </div>
+            
+            <button id="leave-game-btn" class="mt-4 border border-rose-900 text-rose-500 py-2 hover:bg-rose-900 hover:text-white transition text-xs">LEAVE GAME</button>
+        </div>
+
+        <div class="lg:w-2/4 flex flex-col items-center gap-4">
+            <div id="game-board" class="panel"></div>
+            <div class="flex gap-4">
+                <button id="user-info-btn" class="skill-btn">MY INFO</button>
+                <button id="admin-panel-btn" class="skill-btn" style="border-color: #9333ea; color: #c084fc;">ADMIN</button>
+            </div>
+        </div>
+
+        <div class="panel lg:w-1/4 p-5">
+            <h2 class="text-lg font-bold mb-4 border-b border-zinc-700 pb-2">GAME LOG</h2>
+            <ul id="game-log-list" class="h-[65vh] overflow-y-auto text-[11px] leading-relaxed pr-2">
+                </ul>
+        </div>
+    </div>
+
+    <div id="game-lobby-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[200]">
+        <div class="modal-content p-10 max-w-md w-full bg-zinc-900 border-2 border-gold" style="border-color: var(--border-primary);">
+            <h2 class="text-3xl font-bold text-center mb-8">ENTRY</h2>
+            <div class="space-y-6">
+                <button id="create-game-btn" class="w-full py-4 bg-emerald-800 font-bold hover:bg-emerald-700 transition">CREATE NEW SESSION</button>
+                <div class="relative flex items-center"><div class="flex-grow border-t border-zinc-700"></div><span class="px-4 text-zinc-500 text-sm">OR</span><div class="flex-grow border-t border-zinc-700"></div></div>
                 <div class="flex gap-2">
-                    <input type="text" id="game-id-input" placeholder="게임 코드" class="form-input flex-grow p-2 rounded bg-gray-700">
-                    <button id="join-game-btn" class="bg-blue-600 text-white font-bold px-4">참가</button>
+                    <input type="text" id="game-id-input" placeholder="CODE" class="bg-black border border-zinc-700 p-3 flex-grow text-center font-bold">
+                    <button id="join-game-btn" class="bg-blue-800 px-6 font-bold hover:bg-blue-700 transition">JOIN</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="user-info-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[80] hidden">
-        <div class="modal-content rounded-md p-8 w-full max-w-md">
-            <h3 class="text-2xl font-bold mb-4" style="color: var(--accent-primary);">내 정보</h3>
-            <div class="space-y-4">
-                <p>코드: <input readonly id="user-info-game-id-display" class="bg-gray-800 p-1 w-full"></p>
-                <button id="user-info-copy-btn" class="w-full bg-gray-600 py-1 text-sm">코드 복사</button>
-                <p>인증: <span id="user-info-auth-char">비로그인</span></p>
-                <button id="user-info-login-btn" class="w-full bg-indigo-600 py-2 font-bold hidden">캐릭터 로그인</button>
-                <button id="user-info-logout-btn" class="w-full bg-red-600 py-2 font-bold hidden">로그아웃</button>
-                <button id="close-user-info-modal-btn" class="w-full bg-gray-600 py-2">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="pc-login-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[90] hidden">
-        <div class="modal-content rounded-md p-8 w-full max-w-sm">
-            <h3 class="text-xl font-bold mb-4">캐릭터 로그인</h3>
-            <select id="char-login-name-select" class="w-full p-2 mb-4 bg-gray-700"></select>
-            <input type="password" id="char-login-password-input" class="w-full p-2 mb-2 bg-gray-700" placeholder="비밀번호(1234)">
-            <p id="char-login-error" class="text-red-500 text-xs"></p>
-            <div class="flex gap-2 mt-4">
-                <button id="cancel-char-login-btn" class="flex-grow bg-gray-600 py-2">취소</button>
-                <button id="submit-char-login-btn" class="flex-grow bg-indigo-600 py-2">확인</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="character-selection-overlay">
-        <div id="selection-list" class="flex p-4 gap-4 overflow-x-auto"></div>
-        <button id="overlay-toggle" class="absolute top-full right-4 bg-gray-700 p-1 rounded-b">▼</button>
-    </div>
-
-    <div class="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-        <div class="panel lg:w-1/4 w-full p-6 flex flex-col">
-            <h2 class="text-xl font-bold mb-4 text-accent-primary">게임 상태</h2>
-            <div id="unit-summary" class="grid grid-cols-2 text-center mb-6">
-                <div><p class="text-xs text-gray-400">아군</p><span id="pc-count" class="summary-count">0</span></div>
-                <div><p class="text-xs text-gray-400">적군</p><span id="enemy-count" class="summary-count">0</span></div>
-            </div>
-            <div id="turn-status" class="p-4 bg-gray-800 rounded mb-4 text-center">
-                <p class="text-sm">현재 상태</p>
-                <div id="current-turn-char" class="text-xl font-bold">준비 중</div>
-            </div>
-            <div id="skill-controls" class="space-y-2 border-t border-gray-700 pt-4"></div>
-            <div id="character-list" class="mt-4 overflow-y-auto max-h-60 space-y-2"></div>
-            <button id="leave-game-btn" class="mt-auto w-full bg-red-900 py-2 text-white font-bold">나가기</button>
-        </div>
-
-        <div class="lg:w-2/4 w-full relative flex justify-center">
-            <div id="game-board"></div>
-            <svg id="foreshadow-layer" class="absolute top-0 left-0 w-full h-full pointer-events-none z-30"></svg>
-        </div>
-
-        <div class="panel lg:w-1/4 w-full p-6">
-            <h2 class="text-lg font-bold mb-4 border-b border-gray-700 pb-2">로그</h2>
-            <ul id="game-log-list" class="h-[60vh] overflow-y-auto space-y-2 text-xs"></ul>
-        </div>
-    </div>
-
-    <div id="admin-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[60] hidden">
-        <div class="modal-content p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div id="admin-modal-content"></div>
-        </div>
-    </div>
-    <div id="admin-password-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[70] hidden">
-        <div class="modal-content p-8 rounded w-full max-w-sm">
-            <h3>관리자 인증</h3>
-            <input type="password" id="admin-password-input" class="w-full p-2 bg-gray-700 my-4">
-            <p id="admin-password-error" class="text-red-500"></p>
+    <div id="admin-password-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[210] hidden">
+        <div class="modal-content p-8 bg-zinc-900 border border-gold" style="border-color: var(--border-primary);">
+            <h3 class="font-bold mb-4">ADMIN ACCESS</h3>
+            <input type="password" id="admin-password-input" class="bg-black border border-zinc-700 p-2 w-full mb-4">
             <div class="flex gap-2">
-                <button id="cancel-admin-login-btn" class="flex-grow bg-gray-600">취소</button>
-                <button id="submit-admin-login-btn" class="flex-grow bg-indigo-600 py-2">확인</button>
+                <button onclick="document.getElementById('admin-password-modal').classList.add('hidden')" class="flex-grow py-2 bg-zinc-800">CANCEL</button>
+                <button id="submit-admin-login-btn" class="flex-grow py-2 bg-purple-800">CONFIRM</button>
             </div>
         </div>
     </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, query, getDocs, writeBatch, getDoc, setDoc, addDoc, serverTimestamp, orderBy, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    <script type="module">
+        // Firebase 및 초기화 로직 (오류가 수정된 버전 유지)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, query, getDocs, writeBatch, getDoc, setDoc, addDoc, serverTimestamp, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // Firebase Config
-    const firebaseConfig = {
-        apiKey: "AIzaSyBAXRaW8GvOxpmvPs3um3o7lf9LUbWMVSE",
-        authDomain: "cheongsongmas.firebaseapp.com",
-        projectId: "cheongsongmas",
-        storageBucket: "cheongsongmas.firebasestorage.app",
-        messagingSenderId: "483983625842",
-        appId: "1:483983625842:web:033711eb780b50e0ad3ceb",
-        measurementId: "G-5P3FRDJFH2"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAXRaW8GvOxpmvPs3um3o7lf9LUbWMVSE",
+            authDomain: "cheongsongmas.firebaseapp.com",
+            projectId: "cheongsongmas",
+            storageBucket: "cheongsongmas.firebasestorage.app",
+            messagingSenderId: "483983625842",
+            appId: "1:483983625842:web:033711eb780b50e0ad3ceb",
+            measurementId: "G-5P3FRDJFH2"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    // Globals
-    const BOARD_SIZE = 10;
-    let characters = [], SKILLS = {}, gameId = null, userId = null;
-    let isAdmin = false, loggedInCharId = null, gameState = 'PREPARATION', roundPhase = 'PLAYER_PHASE';
-    let selectedCharacterId = null, previewCharacterId = null, selectedSkill = 'move', round = 1;
-    let boardTiles = {}, isMapEditMode = false, currentTileType = 'normal', maxRounds = 0;
-    let previousTurnCharId = null, isBoardInitialized = false;
+        let characters = [], SKILLS = {}, gameId = null;
+        let isAdmin = false, loggedInCharId = null, gameState = 'PREPARATION';
+        let selectedCharacterId = null, selectedSkill = 'move';
+        let boardTiles = {}, isBoardInitialized = false;
 
-    const DEFAULT_PC_PASSWORD = "1234";
-    const MP_REGEN_PER_TURN = 10;
-    const DAMAGE_TILE_DAMAGE = 10;
+        // --- Logic: Game Data Listener ---
+        function listenForGameData(id) {
+            onSnapshot(doc(db, 'games', id), (snap) => {
+                if (!snap.exists()) return;
+                const data = snap.data();
+                gameState = data.gameState || 'PREPARATION';
+                SKILLS = data.skills || {};
+                render();
+            });
 
-    // UI Elements
-    const gameBoard = document.getElementById('game-board');
-    const skillControls = document.getElementById('skill-controls');
-    const lobbyModal = document.getElementById('game-lobby-modal');
+            onSnapshot(collection(db, "games", id, "characters"), (snap) => {
+                characters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                render();
+            });
 
-    // --- Core Listeners ---
-    function listenForGameData(id) {
-        onSnapshot(doc(db, 'games', id), (snap) => {
-            if (!snap.exists()) return;
-            const data = snap.data();
-            const oldGameState = gameState;
-            gameState = data.gameState || 'PREPARATION';
-            roundPhase = data.roundPhase || 'PLAYER_PHASE';
-            round = data.round || 1;
-            maxRounds = data.maxRounds || 0;
-            SKILLS = data.skills || {};
-            render();
-        });
+            onSnapshot(doc(db, 'games', id, 'board', 'tiles'), (snap) => {
+                boardTiles = snap.data()?.tiles || {};
+                render();
+            });
 
-        onSnapshot(collection(db, "games", id, "characters"), (snap) => {
-            characters = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => a.turnOrder - b.turnOrder);
-            render();
-        });
+            onSnapshot(query(collection(db, "games", id, "logs"), orderBy("timestamp", "desc")), (snap) => {
+                const logList = document.getElementById('game-log-list');
+                logList.innerHTML = snap.docs.map(d => {
+                    const type = d.data().type;
+                    return `<li class="log-${type}">${d.data().message}</li>`;
+                }).join('');
+            });
+        }
 
-        onSnapshot(doc(db, 'games', id, 'board', 'tiles'), (snap) => {
-            boardTiles = snap.data()?.tiles || {};
-            render();
-        });
+        // --- Logic: Render ---
+        function render() {
+            if (!isBoardInitialized) {
+                gameBoard.innerHTML = '';
+                for (let y = 0; y < 10; y++) {
+                    for (let x = 0; x < 10; x++) {
+                        const c = document.createElement('div');
+                        c.className = 'cell'; c.dataset.x = x; c.dataset.y = y;
+                        gameBoard.appendChild(c);
+                    }
+                }
+                isBoardInitialized = true;
+            }
 
-        onSnapshot(query(collection(db, "games", id, "logs"), orderBy("timestamp", "desc")), (snap) => {
-            const logList = document.getElementById('game-log-list');
-            logList.innerHTML = snap.docs.map(d => `<li class="log-${d.data().type}">${d.data().message}</li>`).join('');
-        });
-    }
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.innerHTML = '';
+                const tile = boardTiles[`${cell.dataset.x},${cell.dataset.y}`];
+                cell.className = 'cell' + (tile ? ` tile-${tile.type}` : '');
+            });
 
-    // --- Helper Functions ---
-    async function logAction(message, type = "system") {
-        if (gameId) await addDoc(collection(db, "games", gameId, "logs"), { message, type, timestamp: serverTimestamp() });
-    }
+            characters.filter(c => c.x !== null).forEach(char => {
+                const cell = gameBoard.querySelector(`[data-x="${char.x}"][data-y="${char.y}"]`);
+                if (cell) {
+                    const token = document.createElement('div');
+                    token.className = `character-token ${char.id === selectedCharacterId ? 'selected' : ''} ${char.type === 'ENEMY' ? 'enemy-token' : ''}`;
+                    token.style.backgroundImage = char.imageUrl ? `url(${char.imageUrl})` : 'none';
+                    if (!char.imageUrl) token.innerHTML = `<span class="flex items-center justify-center h-full text-zinc-500 font-bold">${char.name[0]}</span>`;
+                    
+                    const hpBar = document.createElement('div');
+                    hpBar.className = 'hp-bar-small';
+                    hpBar.innerHTML = `<div class="hp-fill-small" style="width: ${(char.hp/char.maxHp)*100}%"></div>`;
+                    token.appendChild(hpBar);
+                    
+                    cell.appendChild(token);
+                }
+            });
 
-    function render() {
-        if (!isBoardInitialized) {
-            gameBoard.innerHTML = '';
-            for (let y = 0; y < BOARD_SIZE; y++) {
-                for (let x = 0; x < BOARD_SIZE; x++) {
-                    const c = document.createElement('div');
-                    c.className = 'cell'; c.dataset.x = x; c.dataset.y = y;
-                    gameBoard.appendChild(c);
+            document.getElementById('pc-count').textContent = characters.filter(c => c.type === 'PC' && c.hp > 0).length;
+            document.getElementById('enemy-count').textContent = characters.filter(c => c.type === 'ENEMY' && c.hp > 0).length;
+            
+            renderSkillButtons();
+        }
+
+        function renderSkillButtons() {
+            const sc = document.getElementById('skill-controls');
+            sc.innerHTML = '';
+            if (gameState === 'PREPARATION') {
+                if (isAdmin) {
+                    sc.innerHTML = `<button id="admin-start-game-btn" class="w-full bg-emerald-800 border border-emerald-500 py-2 font-bold text-white hover:bg-emerald-700 transition">⚔️ START SESSION</button>`;
+                } else {
+                    sc.innerHTML = `<p class="text-center text-xs text-zinc-500 italic">WAITING FOR ADMIN...</p>`;
+                }
+            } else {
+                const curChar = characters.find(c => c.id === selectedCharacterId);
+                if (curChar) {
+                    curChar.skills.forEach(sid => {
+                        const s = SKILLS[sid];
+                        if (s) {
+                            const b = document.createElement('button');
+                            b.className = `skill-btn ${selectedSkill === sid ? 'bg-gold text-black' : ''}`;
+                            b.textContent = s.name.toUpperCase();
+                            b.onclick = () => { selectedSkill = sid; render(); };
+                            sc.appendChild(b);
+                        }
+                    });
                 }
             }
-            isBoardInitialized = true;
         }
 
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.innerHTML = '';
-            const x = cell.dataset.x, y = cell.dataset.y;
-            const tile = boardTiles[`${x},${y}`];
-            cell.className = 'cell' + (tile ? ` tile-${tile.type}` : '');
-        });
-
-        characters.filter(c => c.x !== null).forEach(char => {
-            const cell = gameBoard.querySelector(`[data-x="${char.x}"][data-y="${char.y}"]`);
-            if (cell) {
-                const token = document.createElement('div');
-                token.className = 'character-token';
-                if (char.type === 'ENEMY') token.classList.add('enemy-token');
-                if (char.id === selectedCharacterId) token.style.boxShadow = "0 0 15px var(--accent-primary)";
-                if (char.hp <= 0) token.style.filter = "grayscale(1)";
-                token.style.backgroundImage = char.imageUrl ? `url(${char.imageUrl})` : 'none';
-                token.innerHTML = char.imageUrl ? '' : `<span class="text-xs">${char.name[0]}</span>`;
-                cell.appendChild(token);
+        // --- Logic: Events ---
+        document.getElementById('skill-controls').addEventListener('click', async (e) => {
+            if (e.target && e.target.id === 'admin-start-game-btn') {
+                if (!gameId) return;
+                await updateDoc(doc(db, 'games', gameId), { gameState: 'STARTED', roundPhase: 'PLAYER_PHASE' });
+                await addDoc(collection(db, "games", gameId, "logs"), { message: "⚔️ 전투가 시작되었습니다!", type: "system", timestamp: serverTimestamp() });
             }
         });
 
-        document.getElementById('pc-count').textContent = characters.filter(c => c.type === 'PC' && c.hp > 0).length;
-        document.getElementById('enemy-count').textContent = characters.filter(c => c.type === 'ENEMY' && c.hp > 0).length;
-        
-        // Skill Buttons rendering
-        renderSkillButtons();
-    }
+        document.getElementById('overlay-toggle').onclick = () => {
+            document.getElementById('character-selection-overlay').classList.toggle('collapsed');
+        };
 
-    function renderSkillButtons() {
-        skillControls.innerHTML = '';
-        if (gameState === 'PREPARATION') {
-            skillControls.innerHTML = `<p class="text-sm text-gray-400">준비 단계입니다. 캐릭터를 배치하세요.</p>`;
-            if (isAdmin) {
-                skillControls.innerHTML += `<button id="admin-start-game-btn" class="w-full bg-green-600 p-2 font-bold mt-2 text-white">⚔️ 게임 시작</button>`;
-            }
-        } else {
-            const curChar = characters.find(c => c.id === selectedCharacterId);
-            if (curChar) {
-                skillControls.innerHTML = `<h3 class="font-bold">${curChar.name} 행동</h3>`;
-                curChar.skills.forEach(sid => {
-                    const s = SKILLS[sid];
-                    if (s) {
-                        const b = document.createElement('button');
-                        b.className = `skill-btn text-xs m-1 ${selectedSkill === sid ? 'bg-accent-primary text-black' : ''}`;
-                        b.textContent = s.name;
-                        b.onclick = () => { selectedSkill = sid; render(); };
-                        skillControls.appendChild(b);
-                    }
-                });
-            }
-        }
-    }
-
-    // --- Events ---
-    // 수정된 부분: 이벤트 위임 방식 (skill-controls 내부의 버튼 클릭 감지)
-    document.getElementById('skill-controls').addEventListener('click', async (e) => {
-        if (e.target && e.target.id === 'admin-start-game-btn') {
-            if (!gameId) return;
-            await updateDoc(doc(db, 'games', gameId), { 
-                gameState: 'STARTED', 
-                roundPhase: 'ENEMY_FORESHADOW' 
-            });
-            const batch = writeBatch(db);
-            characters.forEach(c => {
-                batch.update(doc(db, 'games', gameId, 'characters', c.id), { hasActedThisRound: false });
-            });
-            await batch.commit();
-            await logAction("⚔️ 게임이 시작되었습니다!", "system");
-        }
-    });
-
-    document.getElementById('create-game-btn').onclick = async () => {
-        const id = generateGameId();
-        gameId = id;
-        await setDoc(doc(db, 'games', id), { 
-            gameState: 'PREPARATION', 
-            adminPassword: '1022',
-            round: 1,
-            skills: DEFAULT_SKILLS
-        });
-        // Initial chars
-        const cRef = collection(db, 'games', id, 'characters');
-        await addDoc(cRef, { name: "용사", type: "PC", hp: 100, maxHp: 100, mp: 50, maxMp: 50, turnOrder: 1, skills: ['slash'], x: null, y: null, size: 1, password: '1234' });
-        await addDoc(cRef, { name: "고블린", type: "ENEMY", hp: 50, maxHp: 50, mp: 0, maxMp: 0, turnOrder: 2, skills: ['slash'], x: null, y: null, size: 1 });
-        
-        localStorage.setItem('currentGameId', id);
-        lobbyModal.classList.add('hidden');
-        listenForGameData(id);
-    };
-
-    document.getElementById('join-game-btn').onclick = () => {
-        const id = document.getElementById('game-id-input').value.toUpperCase();
-        if (id) {
+        document.getElementById('create-game-btn').onclick = async () => {
+            const id = Math.random().toString(36).substring(2, 8).toUpperCase();
             gameId = id;
+            await setDoc(doc(db, 'games', id), { gameState: 'PREPARATION', adminPassword: '0000', round: 1, skills: { slash: { name: '베기', range: 1, multiplier: 1 } } });
             localStorage.setItem('currentGameId', id);
-            lobbyModal.classList.add('hidden');
-            listenForGameData(id);
-        }
-    };
+            location.reload();
+        };
 
-    document.getElementById('admin-panel-btn').onclick = () => {
-        if (isAdmin) openAdminModal();
-        else document.getElementById('admin-password-modal').classList.remove('hidden');
-    };
+        document.getElementById('join-game-btn').onclick = () => {
+            const id = document.getElementById('game-id-input').value.toUpperCase();
+            if (id) { gameId = id; localStorage.setItem('currentGameId', id); location.reload(); }
+        };
 
-    document.getElementById('submit-admin-login-btn').onclick = async () => {
-        const pw = document.getElementById('admin-password-input').value;
-        const snap = await getDoc(doc(db, 'games', gameId));
-        if (snap.data().adminPassword === pw) {
-            isAdmin = true;
-            document.getElementById('admin-password-modal').classList.add('hidden');
-            updateAuthStatus();
-            render();
-        } else {
-            document.getElementById('admin-password-error').textContent = "오답";
-        }
-    };
-
-    // User/PC Login
-    document.getElementById('user-info-login-btn').onclick = () => {
-        const sel = document.getElementById('char-login-name-select');
-        sel.innerHTML = characters.filter(c => c.type === 'PC').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-        document.getElementById('pc-login-modal').classList.remove('hidden');
-    };
-
-    document.getElementById('submit-char-login-btn').onclick = () => {
-        const cid = document.getElementById('char-login-name-select').value;
-        const pw = document.getElementById('char-login-password-input').value;
-        const char = characters.find(c => c.id === cid);
-        if (char && char.password === pw) {
-            loggedInCharId = cid;
-            document.getElementById('pc-login-modal').classList.add('hidden');
-            updateAuthStatus();
-        }
-    };
-
-    function updateAuthStatus() {
-        const span = document.getElementById('user-info-auth-char');
-        if (isAdmin) span.textContent = "관리자";
-        else if (loggedInCharId) span.textContent = characters.find(c => c.id === loggedInCharId)?.name || "로그인됨";
-        
-        document.getElementById('user-info-login-btn').classList.toggle('hidden', isAdmin || !!loggedInCharId);
-        document.getElementById('user-info-logout-btn').classList.toggle('hidden', !isAdmin && !loggedInCharId);
-    }
-
-    // Board Clicks
-    gameBoard.onclick = async (e) => {
-        const cell = e.target.closest('.cell');
-        if (!cell) return;
-        const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
-
-        if (gameState === 'PREPARATION') {
-            if (isAdmin || loggedInCharId) {
-                const charToPlace = characters.find(c => c.id === (isAdmin ? characters[0].id : loggedInCharId));
-                if (charToPlace) await updateDoc(doc(db, 'games', gameId, 'characters', charToPlace.id), { x, y });
+        document.getElementById('submit-admin-login-btn').onclick = async () => {
+            const pw = document.getElementById('admin-password-input').value;
+            const snap = await getDoc(doc(db, 'games', gameId));
+            if (snap.data().adminPassword === pw) {
+                isAdmin = true; document.getElementById('admin-password-modal').classList.add('hidden'); render();
             }
-        } else {
+        };
+
+        gameBoard.onclick = async (e) => {
+            const cell = e.target.closest('.cell');
+            if (!cell) return;
+            const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
             const charHere = characters.find(c => c.x === x && c.y === y);
-            if (charHere) {
-                selectedCharacterId = charHere.id;
-                render();
+            if (charHere) { selectedCharacterId = charHere.id; render(); }
+            else if (isAdmin && selectedCharacterId) {
+                await updateDoc(doc(db, 'games', gameId, 'characters', selectedCharacterId), { x, y });
             }
-        }
-    };
+        };
 
-    // Utils
-    function generateGameId() { return Math.random().toString(36).substring(2, 8).toUpperCase(); }
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            const saved = localStorage.getItem('currentGameId');
-            if (saved) { gameId = saved; lobbyModal.classList.add('hidden'); listenForGameData(saved); }
-        } else signInAnonymously(auth);
-    });
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const saved = localStorage.getItem('currentGameId');
+                if (saved) { gameId = saved; document.getElementById('game-lobby-modal').classList.add('hidden'); listenForGameData(saved); }
+            } else signInAnonymously(auth);
+        });
 
-    document.getElementById('user-info-btn').onclick = () => document.getElementById('user-info-modal').classList.remove('hidden');
-    document.getElementById('close-user-info-modal-btn').onclick = () => document.getElementById('user-info-modal').classList.add('hidden');
-    document.getElementById('leave-game-btn').onclick = () => { localStorage.removeItem('currentGameId'); location.reload(); };
+        document.getElementById('leave-game-btn').onclick = () => { localStorage.removeItem('currentGameId'); location.reload(); };
 
-</script>
+    </script>
 </body>
 </html>
