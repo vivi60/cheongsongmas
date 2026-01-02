@@ -1219,7 +1219,7 @@
 
     // IMPORTANT: In a real environment, these configs should be loaded securely.
 //여기를 수정해주세요—------ Firebase 생성코드
-    const firebaseConfig = {
+	const firebaseConfig = {
   apiKey: "AIzaSyBAXRaW8GvOxpmvPs3um3o7lf9LUbWMVSE",
   authDomain: "cheongsongmas.firebaseapp.com",
   projectId: "cheongsongmas",
@@ -5164,10 +5164,32 @@ window.addEventListener('beforeunload', async (event) => {
     if (loggedInCharId) {
         await updateDoc(doc(db, 'games', gameId, 'characters', loggedInCharId), { isLoggedIn: false });
     }
+	// 스크립트 하단, 다른 addEventListener들이 있는 곳에 추가
+document.getElementById('skill-controls').addEventListener('click', async (e) => {
+    // 클릭된 요소가 '게임 시작' 버튼인지 확인
+    if (e.target && e.target.id === 'admin-start-game-btn') {
+        if (!gameId) return;
+
+        await setDoc(doc(db, 'games', gameId), { 
+            gameState: 'STARTED',
+            roundPhase: 'ENEMY_FORESHADOW' 
+        }, { merge: true });
+
+        const batch = writeBatch(db);
+        characters.forEach(char => {
+            const charRef = doc(db, 'games', gameId, 'characters', char.id);
+            batch.update(charRef, { hasActedThisRound: false, nextAction: null });
+        });
+        await batch.commit();
+        
+        await logAction(`⚔️ 게임이 시작되었습니다! 라운드 1의 적 행동 예고를 시작합니다.`, "system");
+    }
+
 });
 </script>
 </body>
 </html>
+
 
 
 
