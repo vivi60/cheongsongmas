@@ -1034,6 +1034,20 @@
     overflow-y: auto;
 }
 
+/* 캐릭터 리스트 스크롤바 커스텀 */
+#char-list-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+#char-list-content::-webkit-scrollbar-thumb {
+    background: var(--accent-primary); /* 기존 금색 계열 변수 */
+    border-radius: 10px;
+}
+
+#char-list-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4 overflow-x-hidden pt-60">
@@ -1142,63 +1156,62 @@
      
     <div class="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
          
-         <div class="panel lg:w-1/4 w-full p-6 shadow-lg flex flex-col">
-            <div>
-                <div class="flex justify-between items-center mb-2">
-                    <h1 class="text-xl font-bold font-title" style="color: var(--accent-primary);">게임 상태</h1>
+<div class="panel lg:w-1/4 w-full p-6 shadow-lg flex flex-col" style="height: 85vh; min-height: 800px;">
+    <div class="flex flex-col h-full">
+        <div class="flex-shrink-0">
+            <div class="flex justify-between items-center mb-2">
+                <h1 class="text-xl font-bold font-title" style="color: var(--accent-primary);">게임 상태</h1>
+            </div>
+            
+            <div id="unit-summary" class="mb-4">
+                <div id="remaining-pc" class="text-center">
+                    <p class="text-xs text-gray-400">남은 아군</p>
+                    <span id="pc-count" class="summary-count">0</span>
                 </div>
-                
-                <div id="unit-summary" class="mb-4">
-                    <div id="remaining-pc" class="text-center">
-                        <p class="text-xs text-gray-400">남은 아군</p>
-                        <span id="pc-count" class="summary-count">0</span>
-                    </div>
-                    <div id="remaining-enemy" class="text-center">
-                        <p class="text-xs text-gray-400">남은 적군</p>
-                        <span id="enemy-count" class="summary-count">0</span>
-                    </div>
+                <div id="remaining-enemy" class="text-center">
+                    <p class="text-xs text-gray-400">남은 적군</p>
+                    <span id="enemy-count" class="summary-count">0</span>
                 </div>
+            </div>
 
-                <div id="game-id-container" class="hidden">
-                    <p class="text-xs font-semibold" style="color: var(--text-secondary);">게임 코드:</p>
-                    <div class="flex items-center gap-2 mt-1">
-                        <input readonly id="game-id-display" class="form-input text-center text-sm p-1" style="background-color: var(--bg-game-id);">
-                        <button id="copy-game-id-btn" class="p-2 bg-gray-600 hover:bg-gray-500">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                        </button>
-                    </div>
+            <div class="hidden">
+                <div id="game-id-container">
+                    <input id="game-id-display" readonly>
+                    <button id="copy-game-id-btn"></button>
                 </div>
-                <div id="auth-status" class="hidden">
-                    <p class="font-semibold text-gray-400">현재 인증:</p>
-                    <span id="current-auth-char" class="text-yellow-400 font-bold">비로그인</span>
-                    <button id="login-btn" class="text-xs ml-2 text-indigo-500 hover:text-indigo-300 hidden">로그인</button>
-                    <button id="logout-btn" class="text-xs ml-2 text-red-500 hover:text-red-300 hidden">로그아웃</button>
+                <div id="auth-status">
+                    <span id="current-auth-char"></span>
+                    <button id="login-btn"></button>
+                    <button id="logout-btn"></button>
                 </div>
-                <div id="turn-status" class="mb-4 stylish-turn-box" >
-                    <p class="text-sm font-semibold" style="color: var(--accent-primary);">현재 턴:</p>
-                    <div id="current-turn-char" class="text-xl font-bold font-title" style="color: var(--accent-secondary);">준비 중...</div>
-                </div>
-                 <div id="admin-turn-controls" class="mt-2"></div>
-                <div id="skill-controls" class="mt-4 pb-4 border-b border-border-secondary">
-                     <p class="text-sm" style="color: var(--text-tertiary);">캐릭터를 선택하면 스킬이 표시됩니다.</p>
-                </div>
-                <div id="character-list" class="mt-4 flex-grow">
-					<div id="char-list-header" class="flex justify-between items-center pb-2 mb-2 border-b border-border-secondary cursor-pointer lg:cursor-default">
-						<h2 class="text-lg font-bold font-title" style="color: var(--text-secondary);">캐릭터 상태</h2>
-						<svg id="char-list-toggle-icon" class="w-5 h-5 transition-transform lg:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-						</svg>
-					</div>
-					<div id="char-list-content" class="max-h-96 overflow-y-auto space-y-2 hidden lg:block">
-						<p style="color: var(--text-tertiary);" class="text-sm">게임에 참여해주세요...</p>
-					</div>
-				</div>
-			</div>
+                <div id="admin-turn-controls"></div>
+                <div id="char-list-toggle-icon"></div>
+            </div>
 
-			<div class="mt-auto pt-4">
-				<button id="leave-game-btn" class="w-full bg-red-600 font-bold py-2 px-4">게임 나가기</button>
-			</div>
+            <div id="turn-status" class="mb-4 stylish-turn-box">
+                <p class="text-sm font-semibold" style="color: var(--accent-primary);">현재 턴:</p>
+                <div id="current-turn-char" class="text-xl font-bold font-title" style="color: var(--accent-secondary);">준비 중...</div>
+            </div>
+            
+            <div id="skill-controls" class="mt-4 pb-4 border-b border-border-secondary">
+                 <p class="text-sm" style="color: var(--text-tertiary);">캐릭터를 선택하면 스킬이 표시됩니다.</p>
+            </div>
         </div>
+
+        <div id="character-list" class="mt-4 flex-grow flex flex-col min-h-0">
+            <div class="flex justify-between items-center pb-2 mb-2 border-b border-border-secondary">
+                <h2 class="text-lg font-bold font-title" style="color: var(--text-secondary);">캐릭터 상태</h2>
+            </div>
+            <div id="char-list-content" class="flex-grow overflow-y-auto pr-2 space-y-4">
+                <p style="color: var(--text-tertiary);" class="text-sm">데이터를 불러오는 중...</p>
+            </div>
+        </div>
+
+        <div class="mt-auto pt-4 flex-shrink-0">
+            <button id="leave-game-btn" class="w-full bg-red-600 font-bold py-2 px-4 rounded transition-colors hover:bg-red-700">게임 나가기</button>
+        </div>
+    </div>
+</div>
 
          
         <div class="lg:w-2/4 w-full flex items-center justify-center relative">
@@ -1504,6 +1517,8 @@ const loginStatusModal = document.getElementById('login-status-modal');
         const enemyData = [ 
             { name: "Enemy1", img: "", type: 'ENEMY', size: 1, skills: ['slash'], order: 2 }, 
             { name: "Enemy2", img: "", type: 'ENEMY', size: 2, skills: ['stomp'], order: 4 }, 
+            { name: "Enemy3", img: "", type: 'ENEMY', size: 1, skills: ['stomp'], order: 1 }, 
+            { name: "Enemy4", img: "", type: 'ENEMY', size: 3, skills: ['stomp'], order: 3 }, 
         ];
         [...pcData, ...enemyData].forEach(char => {
             const charPassword = char.type === 'PC' ? DEFAULT_PC_PASSWORD : ''; 
