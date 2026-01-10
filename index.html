@@ -1691,7 +1691,22 @@ const loginStatusModal = document.getElementById('login-status-modal');
     if (unsubscribeLogs) unsubscribeLogs();
     if (unsubscribeChats) unsubscribeChats();
 
-    unsubscribeSettings = onSnapshot(doc(db, 'games', gameId), async (docSnap) => { // async 추가
+    unsubscribeSettings = onSnapshot(doc(db, 'games', gameId), async (docSnap) => {
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+
+        // [추가] 궁극기 이벤트 발생 감지
+        if (data.ultimateEvent) {
+            const event = data.ultimateEvent;
+            const attacker = characters.find(c => c.id === event.attackerId);
+            const skill = SKILLS[event.skillId];
+            
+            // 중복 실행 방지 (동일한 타임스탬프인 경우 무시)
+            if (attacker && skill && (!window.lastUltTimestamp || window.lastUltTimestamp !== event.timestamp?.seconds)) {
+                window.lastUltTimestamp = event.timestamp?.seconds;
+                runUltimateCutscene(attacker, skill); // 1번에서 만든 함수 실행
+            }
+        }
         if (docSnap.exists()) {
             const data = docSnap.data();
             const oldGameState = gameState; // [수정] 이전 gameState를 기억합니다.
@@ -1997,7 +2012,55 @@ function listenForCombatTextEvents(gameId) {
         await batch.commit();
     }
 }
+// [추가] 모든 유저가 공통으로 실행할 연출 함수
+async function runUltimateCutscene(attacker, skill) {
+    const cutscene = document.getElementById('ultimate-cutscene');
+    const cutsceneImg = document.getElementById('cutscene-img');
+    const cutsceneText = document.getElementById('cutscene-skill-name');
 
+    if (!cutscene || !cutsceneText || !cutsceneImg) return;
+
+    // 궁극기 전용 이미지 우선, 없으면 프로필 이미지
+    const ultImageUrl = attacker.ultImage || attacker.imageUrl || attacker.img || "";
+    
+    // 초기화 및 표시
+    cutscene.style.display = 'flex';
+    cutscene.style.opacity = '1';
+    cutsceneText.style.display = 'block';
+    cutsceneText.style.opacity = '0';
+    cutsceneImg.style.display = 'none';
+    cutsceneImg.style.opacity = '0';
+    
+    cutsceneImg.style.backgroundImage = ultImageUrl ? `url('${ultImageUrl}')` : 'none';
+    cutsceneText.innerHTML = `
+        <span style="font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;">ULTIMATE ABILITY</span>
+        <span style="color: var(--accent-primary);">${attacker.name}</span><br>
+        <span style="font-size: 0.6em; color: white;">궁극기 시전!</span>
+    `;
+
+    // 연출 시작
+    await delay(100);
+    cutsceneText.classList.add('active-text');
+    await delay(2000); 
+
+    cutsceneText.classList.remove('active-text');
+    await delay(800); 
+
+    cutsceneText.style.display = 'none';
+    cutsceneImg.style.display = 'block';
+    await delay(50);
+    cutsceneImg.classList.add('active-img');
+    await delay(3000); 
+
+    cutscene.style.transition = 'opacity 0.8s';
+    cutscene.style.opacity = '0';
+    await delay(800);
+
+    // 정리
+    cutscene.style.display = 'none';
+    cutscene.classList.remove('active-text', 'active-img');
+    cutscene.style.opacity = '1';
+}
 async function determineEnemyNextActions() {
     if (!gameId) return;
 
@@ -2886,62 +2949,18 @@ async function applyStatusEffect(target, effectInfo) {
 
     // --- [1] 궁극기 연출 (수정된 버전) ---
     if (skill.category === 'Ultimate') {
-        const cutscene = document.getElementById('ultimate-cutscene');
-        const cutsceneImg = document.getElementById('cutscene-img');
-        const cutsceneText = document.getElementById('cutscene-skill-name');
-
-        if (cutscene && cutsceneText && cutsceneImg) {
-            // [이미지 결정] ultImage가 있으면 사용, 없으면 기본 프로필 사용
-            const ultImageUrl = attacker.ultImage || attacker.imageUrl || attacker.img || "";
-            
-            // 초기화
-            cutscene.style.display = 'flex';
-            cutscene.style.opacity = '1';
-            cutsceneText.style.display = 'block';
-            cutsceneText.style.opacity = '0';
-            cutsceneImg.style.display = 'none';
-            cutsceneImg.style.opacity = '0';
-            
-            // 이미지 설정
-            cutsceneImg.style.backgroundImage = ultImageUrl ? `url('${ultImageUrl}')` : 'none';
-            
-            // 텍스트 설정 (이름 + 궁극기 시전!)
-            cutsceneText.innerHTML = `
-                <span style="font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;"></span>
-                <span style="color: var(--accent-primary);">${attacker.name}</span><br>
-                <span style="font-size: 0.6em; color: white;">궁극기 시전!</span>
-            `;
-
-            // 연출 시작: 글자 나타남
-            await delay(100);
-            cutsceneText.classList.add('active-text');
-            await delay(2000); 
-
-            // 글자 사라짐
-            cutsceneText.classList.remove('active-text');
-            await delay(800); 
-
-            // 사진 페이드인 등장
-            cutsceneText.style.display = 'none';
-            cutsceneImg.style.display = 'block';
-            await delay(50);
-            cutsceneImg.classList.add('active-img'); // CSS에서 opacity가 1로 변하며 페이드인됨
-            await delay(3000); 
-
-            // 전체 종료 페이드아웃
-            cutscene.style.transition = 'opacity 0.8s';
-            cutscene.style.opacity = '0';
-            await delay(800);
-
-            // 정리
-            cutscene.style.display = 'none';
-            cutscene.classList.remove('active-text', 'active-img');
-            cutsceneText.style.display = 'block';
-            cutscene.style.opacity = '1'; 
+    // [수정] DB의 ultimateEvent 필드에 정보를 업데이트하여 모든 유저에게 방송합니다.
+    await setDoc(doc(db, 'games', gameId), { 
+        ultimateEvent: {
+            attackerId: attacker.id,
+            skillId: skillId,
+            timestamp: serverTimestamp() // 동기화 기준 시간
         }
-    }
-
-    // --- [2] 실제 스킬 효과 및 데미지 판정 (이 아래는 기존 코드와 동일) ---
+    }, { merge: true });
+    
+    // 모든 유저의 화면에서 연출이 끝날 때까지 대미지 계산을 잠시 미룹니다.
+    await delay(6500); 
+}
     let actionSucceeded = false;
     let affectedTargets = [];
 
@@ -5502,6 +5521,7 @@ document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter
 </script>
 </body>
 </html>
+
 
 
 
