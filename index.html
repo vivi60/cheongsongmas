@@ -1135,46 +1135,6 @@
 </head>
 
 
-<button onclick="
-    const cs = document.getElementById('ultimate-cutscene');
-    const cimg = document.getElementById('cutscene-img');
-    const ctxt = document.getElementById('cutscene-skill-name');
-    
-    // 초기 세팅
-    cs.style.display = 'flex';
-    cs.style.opacity = '1';
-    cimg.style.display = 'none';
-    ctxt.style.display = 'block';
-    ctxt.innerHTML = '<span style=\'font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;\'></span><span style=\'color: #D4B783\'>미장</span><br><span style=\'font-size: 0.6em; color: white;\'>궁극기 시전!</span>';
-    cimg.style.backgroundImage = 'url(https://i.ibb.co/ksGtTXtV/image.jpg)';
-
-    // 1단계: 글자 등장
-    setTimeout(() => ctxt.classList.add('active-text'), 100);
-    
-    // 2단계: 글자 퇴장 후 사진 등장
-    setTimeout(() => {
-        ctxt.classList.remove('active-text');
-        setTimeout(() => {
-            ctxt.style.display = 'none';
-            cimg.style.display = 'block';
-            setTimeout(() => cimg.classList.add('active-img'), 50);
-        }, 800);
-    }, 2000);
-
-    // 3단계: 전체 종료
-    setTimeout(() => {
-        cs.style.transition = 'opacity 0.8s';
-        cs.style.opacity = '0';
-        setTimeout(() => {
-            cs.style.display = 'none';
-            cs.classList.remove('active-text', 'active-img');
-        }, 800);
-    }, 6000);" 
-    class="fixed top-24 left-4 z-[200] bg-black text-white font-bold p-3 border-2 border-yellow-600 rounded">
-    🎬 최종 연출 테스트
-</button>
-
-
 
 <body class="flex flex-col items-center justify-center min-h-screen p-4 overflow-x-hidden pt-60">
     <div id="drag-ghost" class="hidden absolute rounded-full z-[100] pointer-events-none w-16 h-16 border-2 border-dashed border-yellow-400 bg-black/30 backdrop-blur-sm"></div>
@@ -1708,26 +1668,24 @@ const loginStatusModal = document.getElementById('login-status-modal');
         pageBackgroundImage = data.pageBackgroundImage || '';
         document.body.style.setProperty('--page-background-image', pageBackgroundImage ? `url('${pageBackgroundImage}')` : 'none');
 
-        // --- [핵심 수정] 궁극기 이벤트 감지 ---
+// --- 궁극기 이벤트 감지 (모든 플레이어 동기화) ---
         if (data.ultimateEvent) {
             const event = data.ultimateEvent;
             const attacker = characters.find(c => c.id === event.attackerId);
             const skill = SKILLS[event.skillId];
+            
             if (attacker && skill && (!window.lastUltTimestamp || window.lastUltTimestamp !== event.timestamp?.seconds)) {
                 window.lastUltTimestamp = event.timestamp?.seconds;
                 runUltimateCutscene(attacker, skill); 
             }
         }
         // ------------------------------------
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const oldGameState = gameState; // [수정] 이전 gameState를 기억합니다.
-            const oldRoundPhase = roundPhase;
 
             SKILLS = data.skills || {};
             gameState = data.gameState || 'PREPARATION';
             roundPhase = data.roundPhase || 'PLAYER_PHASE';
 
+            // 게임 종료 안내
             if (oldGameState === 'STARTED' && gameState === 'ENDED' && data.gameResult) {
                 showGameSummaryModal(data.gameResult.title, data.gameResult.message);
             }
@@ -1744,9 +1702,6 @@ const loginStatusModal = document.getElementById('login-status-modal');
             boardBackgroundImage = data.boardBackgroundImage || '';
             pageBackgroundImage = data.pageBackgroundImage || '';
             document.body.style.setProperty('--page-background-image', pageBackgroundImage ? `url('${pageBackgroundImage}')` : 'none');
-
-            const turnCharId = data.currentTurnCharId;
-            actingEnemyId = data.actingEnemyId || null;
 
             if (gameState === 'STARTED' && oldRoundPhase !== roundPhase) {
                 selectedCharacterId = null;
@@ -1882,7 +1837,11 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 }
             }
             
+// [5] 턴 및 자동화 로직
+            const turnCharId = data.currentTurnCharId;
             const currentTurnChar = characters.find(c => c.id === turnCharId);
+            actingEnemyId = data.actingEnemyId || null; // actingEnemyId 업데이트 추가
+
             if (gameState === 'STARTED' && currentTurnChar && currentTurnChar.hp <= 0 && isAdmin) {
                 setTimeout(() => advanceRoundPhase(), 1000);
             }
@@ -1895,6 +1854,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
             previousTurnCharId = turnCharId;
             currentTurnIndex = characters.findIndex(c => c.id === turnCharId);
             if (currentTurnIndex === -1) currentTurnIndex = 0;
+            
             if (!adminModal.classList.contains('hidden')) openAdminModal();
 
             onSnapshot(doc(db, 'games', gameId, 'board', 'tiles'), (tileDoc) => {
@@ -2045,7 +2005,7 @@ async function runUltimateCutscene(attacker, skill) {
     
     cutsceneImg.style.backgroundImage = ultImageUrl ? `url('${ultImageUrl}')` : 'none';
     cutsceneText.innerHTML = `
-        <span style="font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;">ULTIMATE ABILITY</span>
+        <span style="font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;"></span>
         <span style="color: var(--accent-primary);">${attacker.name}</span><br>
         <span style="font-size: 0.6em; color: white;">궁극기 시전!</span>
     `;
@@ -2959,23 +2919,24 @@ async function applyStatusEffect(target, effectInfo) {
     const skill = SKILLS[skillId];
     if (!skill || !target) return;
 
-    // executeSkill 함수 내부의 궁극기 조건문 부분만 교체
+    // [1] 궁극기 연출 (DB에 신호 보내기)
     if (skill.category === 'Ultimate') {
-    await setDoc(doc(db, 'games', gameId), { 
-        ultimateEvent: {
-            attackerId: attacker.id,
-            skillId: skillId,
-            timestamp: serverTimestamp()
-        }
-    }, { merge: true });
-    
-    await delay(6500); // 연출 시간 대기
-}
-}
+        await setDoc(doc(db, 'games', gameId), { 
+            ultimateEvent: {
+                attackerId: attacker.id,
+                skillId: skillId,
+                timestamp: serverTimestamp()
+            }
+        }, { merge: true });
+        
+        await delay(6500); // 연출 시간 대기
+    } 
+    // ⚠️ 주의: 여기서 함수를 닫는 } 괄호가 있어서 에러가 났었습니다. 제거했습니다.
+
     let actionSucceeded = false;
     let affectedTargets = [];
 
-    // ★ 수정된 부분: category가 'Attack' 이거나 'Ultimate' 인 경우 모두 공격 로직 실행
+    // [2] 스킬 효과 적용 (공격/궁극기)
     if (skill.category === 'Attack' || skill.category === 'Ultimate') {
         if (target.type === attacker.type) {
             await logAction(`⚠️ ${attacker.name}은(는) 아군에게 공격할 수 없습니다.`, "system");
@@ -2993,14 +2954,16 @@ async function applyStatusEffect(target, effectInfo) {
                 }
             }
         } else {
-// 단일 공격
+            // 단일 공격
             const success = await applyDamage(attacker, target, skillId);
             if (success) {
                 actionSucceeded = true;
                 affectedTargets.push(target);
             }
         }
-    } else if (skill.category === 'Heal' || skill.category === 'Support') {
+    } 
+    // [3] 스킬 효과 적용 (힐/서포트)
+    else if (skill.category === 'Heal' || skill.category === 'Support') {
         if (target.type !== attacker.type) {
             await logAction(`⚠️ ${attacker.name}은(는) 적군에게 ${skill.name}을(를) 사용할 수 없습니다.`, "system");
             return;
@@ -3014,13 +2977,14 @@ async function applyStatusEffect(target, effectInfo) {
         actionSucceeded = true; 
     }
     
+    // [4] 상태 이상 효과 적용
     if (skill.appliesEffect && affectedTargets.length > 0) {
         for (const finalTarget of affectedTargets) {
-            // 💥 여기가 핵심: attacker가 아닌 finalTarget에게 효과를 적용합니다.
             await applyStatusEffect(finalTarget, skill.appliesEffect);
         }
     }
     
+    // [5] 행동 종료 처리
     if (actionSucceeded) {
         const isGameOver = await checkGameEndCondition();
         if (isGameOver) return;
@@ -3041,7 +3005,8 @@ async function applyStatusEffect(target, effectInfo) {
     } else {
         render(); 
     }
-}
+} 
+// ▲ 이 닫는 괄호가 누락되어 있어서 'undoMove' 함수와 코드가 섞였을 수 있습니다. 꼭 확인하세요!
 
     async function undoMove() {
     const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
@@ -5532,7 +5497,6 @@ document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter
 </script>
 </body>
 </html>
-
 
 
 
