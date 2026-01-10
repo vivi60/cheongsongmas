@@ -1093,18 +1093,26 @@
 }
 
 .cutscene-text {
-    font-family: 'Cinzel', serif;
+    font-family: 'Cinzel',serif;
     font-size: 4rem;
-    font-weight: bold;
-    color: var(--accent-primary);
     text-align: center;
     line-height: 1.2;
+    
+    /* 위치 및 애니메이션 설정 (기존 유지) */
     opacity: 0;
     transform: scale(0.9) translateY(20px);
-    /* 0.7초 동안 부드럽게 전환 */
     transition: opacity 0.7s ease-in-out, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    text-shadow: 0 0 20px rgba(212, 183, 131, 0.8), 0 0 10px black;
-    position: absolute; /* 사진과 위치 겹침 방지 */
+    position: absolute;
+    width: 100%; /* 가로 정렬을 위해 추가 */
+    
+    /* ★ 색상 및 그림자: 라운드 배너와 동일하게 통일 */
+    color: var(--turn-highlight-color); 
+    text-shadow: 
+        -2px -2px 0 #000,  
+         2px -2px 0 #000,
+        -2px  2px 0 #000,
+         2px  2px 0 #000,
+         0 0 15px rgba(0,0,0,0.8);
 }
 
 .active .cutscene-text {
@@ -1130,7 +1138,22 @@
     50% { opacity: 1; transform: scale(1.1); }
     100% { opacity: 0; transform: scale(1.2); }
 }
+/* [추가] 캐릭터 이름: 얇게 (Normal) */
+.ult-char-name {
+    display: block;
+    font-size: 0.5em; /* 4rem의 절반 크기 */
+    font-weight: normal; /* ★ 굵기 취소 */
+    margin-bottom: 0.5rem;
+    letter-spacing: 2px;
+    opacity: 0.9;
+}
 
+/* [추가] 시전 대사: 굵게 (Bold) */
+.ult-cast-text {
+    display: block;
+    font-size: 0.8em;
+    font-weight: bold; /* ★ 굵게 강조 */
+}
     </style>
 </head>
 
@@ -1486,21 +1509,32 @@ const combatTextStartTime = new Date();
         'resurrect': { id: 'resurrect', name: '부활의 주문', type: 'Heal', range: 1, rangeShape: 'diamond', multiplier: 0.3, icon: '👼', targetType: 'ALLY_DEAD', mpCost: 50, category: 'Support' }, // HP 30% 부활, MP 0으로
         'hp_transfer': { id: 'hp_transfer', name: '생명력 전달', type: 'Heal', range: 2, rangeShape: 'diamond', multiplier: 1.5, icon: '💖', targetType: 'ALLY', mpCost: 0, hpCost: 20, category: 'Support' }, // HP 20 소모, 30 회복
         'mp_transfer': { id: 'mp_transfer', name: '마나 전달', type: 'Support', range: 2, rangeShape: 'diamond', multiplier: 30, icon: '💧', targetType: 'ALLY', mpCost: 10, category: 'Support' }, // MP 10 소모, 30 MP 전달
-        // 궁극기    
+    // [기존] 미장 궁극기
         'super_nova': { 
-        id: 'super_nova', 
-        name: '초신성 폭발', 
-        type: 'Ranged', 
-        range: 5, 
-        rangeShape: 'diamond', 
-        multiplier: 3.5, 
-        icon: '☀️', 
-        isAoe: true, 
-        aoeRange: 2, 
-        aoeShape: 'square', 
-        mpCost: 100, 
-        category: 'Ultimate' // 카테고리를 Ultimate로 설정
-    },
+            id: 'super_nova', name: '초신성 폭발', type: 'Ranged', range: 5, rangeShape: 'diamond', multiplier: 3.5, icon: '☀️', 
+            isAoe: true, aoeRange: 2, aoeShape: 'square', mpCost: 1, category: 'Ultimate' 
+        },
+
+        // [추가] 천구 궁극기: 천벌 (십자 범위 스턴 공격)
+        'heaven_wrath': { 
+            id: 'heaven_wrath', name: '천벌', type: 'Ranged', range: 4, rangeShape: 'square', multiplier: 2.5, icon: '⚡', 
+            isAoe: true, aoeRange: 1, aoeShape: 'cross', mpCost: 1, category: 'Ultimate',
+            appliesEffect: { id: 'stunned', turns: 1 } 
+        },
+
+        // [추가] 이든 궁극기: 에덴의 정원 (광역 힐 + 재생 버프)
+        'eden_garden': { 
+            id: 'eden_garden', name: '에덴의 정원', type: 'Heal', range: 0, rangeShape: 'diamond', multiplier: 2.5, icon: '🌳', 
+            targetType: 'ALLY', isAoe: true, aoeRange: 3, aoeShape: 'diamond', mpCost: 1, category: 'Ultimate',
+            appliesEffect: { id: 'regenerating', turns: 3, value: 20 }
+        },
+
+        // [추가] 삼다수 궁극기: 대해일 (주변 광역 피해 + 공격력 약화)
+        'tsunami': { 
+            id: 'tsunami', name: '대해일', type: 'Melee', range: 3, rangeShape: 'square', multiplier: 3.0, icon: '🌊', 
+            isAoe: true, aoeRange: 1, aoeShape: 'square', mpCost: 1, category: 'Ultimate',
+            appliesEffect: { id: 'strengthDown', turns: 2, value: 0.5 }
+        }
     };
     let SKILLS = {};
     
@@ -1617,11 +1651,18 @@ const loginStatusModal = document.getElementById('login-status-modal');
     if (snapshot.empty) {
         const batch = writeBatch(db);
         const pcData = [ 
-            { name: "미장", img: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer'], order: 1 },
-            { name: "천구", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 2 },
-            { name: "이든", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 3 },
-            { name: "삼다수", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 4 },
-        ];
+                // 미장: 초신성 폭발 추가
+                { name: "미장", img: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer', 'super_nova'], order: 1 },
+                
+                // 천구: 천벌 추가
+                { name: "천구", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'heaven_wrath'], order: 2 },
+                
+                // 이든: 에덴의 정원 추가
+                { name: "이든", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'eden_garden'], order: 3 },
+                
+                // 삼다수: 대해일 추가
+                { name: "삼다수", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'tsunami'], order: 4 },
+            ];
         const enemyData = [ 
             { name: "Enemy1", img: "", type: 'ENEMY', size: 1, skills: ['slash'], order: 2 }, 
             { name: "Enemy2", img: "", type: 'ENEMY', size: 2, skills: ['stomp'], order: 4 }, 
@@ -1984,7 +2025,7 @@ function listenForCombatTextEvents(gameId) {
         await batch.commit();
     }
 }
-// [추가] 모든 유저가 공통으로 실행할 연출 함수
+// [수정] 모든 유저가 공통으로 실행할 연출 함수
 async function runUltimateCutscene(attacker, skill) {
     const cutscene = document.getElementById('ultimate-cutscene');
     const cutsceneImg = document.getElementById('cutscene-img');
@@ -2003,25 +2044,29 @@ async function runUltimateCutscene(attacker, skill) {
     cutsceneImg.style.display = 'none';
     cutsceneImg.style.opacity = '0';
     
+    // 이미지 설정
     cutsceneImg.style.backgroundImage = ultImageUrl ? `url('${ultImageUrl}')` : 'none';
+    
+    // ★ 텍스트 설정 수정됨
+    // 기존: attacker.name + "궁극기 시전!"
+    // 변경: attacker.name + skill.name + "을(를) 시전합니다!"
     cutsceneText.innerHTML = `
-        <span style="font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;"></span>
-        <span style="color: var(--accent-primary);">${attacker.name}</span><br>
-        <span style="font-size: 0.6em; color: white;">궁극기 시전!</span>
+        <span class="ult-char-name">${attacker.name}</span>
+        <span class="ult-cast-text">${skill.name}을(를) 시전합니다!</span>
     `;
 
     // 연출 시작
     await delay(100);
-    cutsceneText.classList.add('active-text');
+    cutsceneText.classList.add('active-text'); // 텍스트 등장
     await delay(2000); 
 
-    cutsceneText.classList.remove('active-text');
+    cutsceneText.classList.remove('active-text'); // 텍스트 퇴장
     await delay(800); 
 
     cutsceneText.style.display = 'none';
     cutsceneImg.style.display = 'block';
     await delay(50);
-    cutsceneImg.classList.add('active-img');
+    cutsceneImg.classList.add('active-img'); // 사진 등장
     await delay(3000); 
 
     cutscene.style.transition = 'opacity 0.8s';
