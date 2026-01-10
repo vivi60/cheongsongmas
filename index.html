@@ -1048,55 +1048,44 @@
     background: rgba(0, 0, 0, 0.1);
 }
 
-/* --- 궁극기 컷신 스타일 --- */
+/* --- 궁극기 컷신 스타일 최적화 --- */
 #ultimate-cutscene {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 200;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    flex-direction: column;
 }
 
 #ultimate-cutscene.active {
-    display: flex !important; /* 자바스크립트에서 클래스를 넣었을 때 확실히 보이게 함 */
+    display: flex;
     animation: cutscene-bg-fade 2s forwards;
 }
 
 .cutscene-content {
     position: relative;
-    width: 100%;
-    height: 400px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
 }
 
-/* --- 화면 흔들림 관련 코드를 삭제하고 아래 설정을 확인하세요 --- */
-
 .cutscene-image {
-    /* 1024x540 해상도 비율에 맞춘 최적화 크기 */
-    width: 80vw;              /* 화면 가로의 80% */
-    max-width: 1200px;        /* 너무 커지지 않게 제한 */
-    aspect-ratio: 1024 / 540; /* 원본 사진의 종횡비 고정 */
-    
-    background-size: contain; 
+    width: 1024px;
+    height: 540px;
+    max-width: 90vw;
+    max-height: 60vh;
+    background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
-    
-    /* 해상도 선명도 강화 */
-    image-rendering: -webkit-optimize-contrast;
+    opacity: 0;
+    transform: scale(1.1); /* 약간 큰 상태에서 줄어들며 등장 */
+    transition: opacity 0.9s ease-in-out, transform 0.9s ease-out;
     image-rendering: high-quality;
-    
-    border-radius: 4px;
-    border: 2px solid rgba(212, 183, 131, 0.5);
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
-    
-    /* 애니메이션 효과에서 흔들림 제외, 슬라이드만 유지 */
-    transform: translateX(-150vw);
-    transition: none; /* 불필요한 떨림 방지 */
 }
 
 .active .cutscene-image {
@@ -1104,19 +1093,26 @@
 }
 
 .cutscene-text {
-    position: absolute;
-    bottom: 20%;
+    font-family: 'Cinzel', 'Noto Sans KR', serif;
     font-size: 4rem;
     font-weight: bold;
-    color: white;
-    text-shadow: 0 0 20px var(--accent-primary), 0 0 40px black;
+    color: var(--accent-primary);
+    text-align: center;
+    line-height: 1.2;
     opacity: 0;
-    transform: scale(0.5);
+    transform: scale(0.9) translateY(20px);
+    /* 0.7초 동안 부드럽게 전환 */
+    transition: opacity 0.7s ease-in-out, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    text-shadow: 0 0 20px rgba(212, 183, 131, 0.8), 0 0 10px black;
+    position: absolute; /* 사진과 위치 겹침 방지 */
 }
 
 .active .cutscene-text {
     animation: cutscene-text-pop 1.5s 0.5s ease-out forwards;
 }
+/* 활성화 상태 (JS에서 opacity와 transform을 직접 제어하므로 보조용으로만 사용) */
+.active-text { opacity: 1 !important; transform: scale(1) translateY(0) !important; }
+.active-img { opacity: 1 !important; transform: scale(1) !important; }
 
 @keyframes cutscene-bg-fade {
     0%, 100% { opacity: 0; }
@@ -1135,7 +1131,6 @@
     100% { opacity: 0; transform: scale(1.2); }
 }
 
-
     </style>
 </head>
 
@@ -1143,28 +1138,40 @@
 <button onclick="
     const cs = document.getElementById('ultimate-cutscene');
     const cimg = document.getElementById('cutscene-img');
-    const b = document.body;
-    // ⚠️ 반드시 이미지 파일의 '직접 주소'를 넣으세요 (.jpg, .png로 끝나는 주소)
-    const imageUrl = 'https://i.ibb.co/VcLsGTs0/image.jpg'; 
-
-    if(cimg) {
-        cimg.style.backgroundImage = `url('${imageUrl}')`;
-        cimg.style.borderRadius = '4px';
-        cimg.style.backgroundSize = '100% 100%'; // 컨테이너에 꽉 채움 (CSS aspect-ratio가 비율 유지)
-        cimg.innerHTML = ''; 
-    }
-
-    cs.style.display = 'flex';
-    cs.classList.add('active');
-    b.classList.add('shake-active');
+    const ctxt = document.getElementById('cutscene-skill-name');
     
+    // 초기 세팅
+    cs.style.display = 'flex';
+    cs.style.opacity = '1';
+    cimg.style.display = 'none';
+    ctxt.style.display = 'block';
+    ctxt.innerHTML = '<span style=\'font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;\'></span><span style=\'color: #D4B783\'>미장</span><br><span style=\'font-size: 0.6em; color: white;\'>궁극기 시전!</span>';
+    cimg.style.backgroundImage = 'url(https://i.ibb.co/ksGtTXtV/image.jpg)';
+
+    // 1단계: 글자 등장
+    setTimeout(() => ctxt.classList.add('active-text'), 100);
+    
+    // 2단계: 글자 퇴장 후 사진 등장
     setTimeout(() => {
-        cs.classList.remove('active');
-        cs.style.display = 'none';
-        b.classList.remove('shake-active');
-    }, 2500);" 
-    class="fixed top-24 left-4 z-[200] bg-white text-black font-bold p-3 border-2 border-red-500 rounded shadow-lg">
-    🖼️ 초고화질 원본 비율 테스트
+        ctxt.classList.remove('active-text');
+        setTimeout(() => {
+            ctxt.style.display = 'none';
+            cimg.style.display = 'block';
+            setTimeout(() => cimg.classList.add('active-img'), 50);
+        }, 800);
+    }, 2000);
+
+    // 3단계: 전체 종료
+    setTimeout(() => {
+        cs.style.transition = 'opacity 0.8s';
+        cs.style.opacity = '0';
+        setTimeout(() => {
+            cs.style.display = 'none';
+            cs.classList.remove('active-text', 'active-img');
+        }, 800);
+    }, 6000);" 
+    class="fixed top-24 left-4 z-[200] bg-black text-white font-bold p-3 border-2 border-yellow-600 rounded">
+    🎬 최종 연출 테스트
 </button>
 
 
@@ -1189,13 +1196,6 @@
         <button id="admin-panel-btn" class="text-white font-bold p-3 rounded-full shadow-lg z-50 transition-transform hover:scale-110" style="background-color: var(--accent-primary); color: var(--bg-primary) !important;">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
         </button>
-</div>
-
-<div id="ultimate-cutscene" style="display: none;">
-    <div class="cutscene-content">
-        <div id="cutscene-img" class="cutscene-image"></div>
-        <div id="cutscene-skill-name" class="cutscene-text font-title">궁극기 시전!</div>
-    </div>
 </div>
 
 <div id="login-status-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[80] hidden">
@@ -1657,7 +1657,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
     if (snapshot.empty) {
         const batch = writeBatch(db);
         const pcData = [ 
-            { name: "미장", img: "", type: 'PC', size: 1, skills: ['super_nova', 'slash', 'shoot', 'heal', 'hp_transfer'], order: 1 },
+            { name: "미장", img: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer'], order: 1 },
             { name: "천구", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 2 },
             { name: "이든", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 3 },
             { name: "삼다수", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 4 },
@@ -2651,8 +2651,8 @@ function isAttackPossible(attacker, target, attackRange) {
     const skill = SKILLS[skillId];
     if (!skill) return;
     
-    //if (skill.mpCost > 0) await updateMP(attacker, -skill.mpCost);
-        
+    if (skill.mpCost > 0) await updateMP(attacker, -skill.mpCost);
+
     const defenderToken = document.querySelector(`.character-token[data-char-id="${defender.id}"]`);
     if (defenderToken) {
         defenderToken.classList.add('hit-animation', 'show-hit-overlay');
@@ -2880,58 +2880,80 @@ async function applyStatusEffect(target, effectInfo) {
 
     return false; // 게임 계속됨
 }
-
-async function executeSkill(attacker, target, skillId) {
+    async function executeSkill(attacker, target, skillId) {
     const skill = SKILLS[skillId];
     if (!skill || !target) return;
 
-    // 1. 마나/체력 비용 체크 및 선지불
-    if (attacker.mp < (skill.mpCost || 0)) {
-        await logAction(`⚠️ ${attacker.name}의 마나가 부족합니다!`, "system");
-        return;
-    }
-
-    // --- 궁극기 연출 로직 (Category가 'Ultimate'일 때만) ---
+    // --- [1] 궁극기 연출 (수정된 버전) ---
     if (skill.category === 'Ultimate') {
         const cutscene = document.getElementById('ultimate-cutscene');
         const cutsceneImg = document.getElementById('cutscene-img');
         const cutsceneText = document.getElementById('cutscene-skill-name');
 
-        if (cutscene) {
-            // 연출 요소 준비
-            const portraitUrl = attacker.imageUrl || attacker.img || "";
-            if (cutsceneImg) {
-                cutsceneImg.style.backgroundImage = portraitUrl ? `url('${portraitUrl}')` : 'none';
-                cutsceneImg.innerHTML = portraitUrl ? '' : `<span class="text-6xl text-white font-title">${attacker.name[0]}</span>`;
-            }
-            if (cutsceneText) cutsceneText.textContent = skill.name;
-
-            // 연출 시작
+        if (cutscene && cutsceneText && cutsceneImg) {
+            // [이미지 결정] ultImage가 있으면 사용, 없으면 기본 프로필 사용
+            const ultImageUrl = attacker.ultImage || attacker.imageUrl || attacker.img || "";
+            
+            // 초기화
             cutscene.style.display = 'flex';
-            cutscene.classList.add('active');
-            document.body.classList.add('shake-active');
+            cutscene.style.opacity = '1';
+            cutsceneText.style.display = 'block';
+            cutsceneText.style.opacity = '0';
+            cutsceneImg.style.display = 'none';
+            cutsceneImg.style.opacity = '0';
+            
+            // 이미지 설정
+            cutsceneImg.style.backgroundImage = ultImageUrl ? `url('${ultImageUrl}')` : 'none';
+            
+            // 텍스트 설정 (이름 + 궁극기 시전!)
+            cutsceneText.innerHTML = `
+                <span style="font-size: 0.4em; color: white; opacity: 0.7; display: block; margin-bottom: 0.5rem;"></span>
+                <span style="color: var(--accent-primary);">${attacker.name}</span><br>
+                <span style="font-size: 0.6em; color: white;">궁극기 시전!</span>
+            `;
 
-            // 2.5초간 연출 대기 (이게 있어야 화면이 보입니다)
-            await new Promise(resolve => setTimeout(resolve, 2500));
+            // 연출 시작: 글자 나타남
+            await delay(100);
+            cutsceneText.classList.add('active-text');
+            await delay(2000); 
 
-            // 연출 종료
-            document.body.classList.remove('shake-active');
-            cutscene.classList.remove('active');
+            // 글자 사라짐
+            cutsceneText.classList.remove('active-text');
+            await delay(800); 
+
+            // 사진 페이드인 등장
+            cutsceneText.style.display = 'none';
+            cutsceneImg.style.display = 'block';
+            await delay(50);
+            cutsceneImg.classList.add('active-img'); // CSS에서 opacity가 1로 변하며 페이드인됨
+            await delay(3000); 
+
+            // 전체 종료 페이드아웃
+            cutscene.style.transition = 'opacity 0.8s';
+            cutscene.style.opacity = '0';
+            await delay(800);
+
+            // 정리
             cutscene.style.display = 'none';
+            cutscene.classList.remove('active-text', 'active-img');
+            cutsceneText.style.display = 'block';
+            cutscene.style.opacity = '1'; 
         }
     }
-    // ----------------------------------------------
-let actionSucceeded = false;
+
+    // --- [2] 실제 스킬 효과 및 데미지 판정 (이 아래는 기존 코드와 동일) ---
+    let actionSucceeded = false;
     let affectedTargets = [];
 
-    // 2. 실제 효과 적용 (공격/버프 등)
-    if (skill.category === 'Attack' || skill.category === 'Ultimate') { // 궁극기도 공격 판정에 포함
-        if (target.type === attacker.type && skill.category !== 'Ultimate') { // 궁극기는 아군 오사 방지 제외 가능
-            await logAction(`⚠️ 아군에게 사용할 수 없습니다.`, "system");
+    // ★ 수정된 부분: category가 'Attack' 이거나 'Ultimate' 인 경우 모두 공격 로직 실행
+    if (skill.category === 'Attack' || skill.category === 'Ultimate') {
+        if (target.type === attacker.type) {
+            await logAction(`⚠️ ${attacker.name}은(는) 아군에게 공격할 수 없습니다.`, "system");
             return;
         }
 
         if (skill.isAoe) {
+            // 광역 공격
             const targetsInAoe = findTargetsInAoe(target.x, target.y, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
             for (const aoeTarget of targetsInAoe) {
                 const success = await applyDamage(attacker, aoeTarget, skillId);
@@ -2941,6 +2963,7 @@ let actionSucceeded = false;
                 }
             }
         } else {
+// 단일 공격
             const success = await applyDamage(attacker, target, skillId);
             if (success) {
                 actionSucceeded = true;
@@ -3145,8 +3168,9 @@ async function handleLogout() {
     const range = (skill.id === 'move' && char.moveRange !== undefined) ? char.moveRange : skill.range;
     const size = char.size || 1;
     
-    const isAttack = skill.category === 'Attack';
-    const isHealOrSupport = skill.category === 'Heal' || skill.category === 'Support';
+// highlightRange 함수 내부 수정
+const isAttack = (skill.category === 'Attack' || skill.category === 'Ultimate'); // Ultimate 추가
+const isHealOrSupport = (skill.category === 'Heal' || skill.category === 'Support');
     
     const shape = skill.rangeShape || 'diamond';
         const validCells = new Set();
@@ -3977,6 +4001,10 @@ function renderLoginStatus() {
                     <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
                         <div><label class="text-gray-400">이름</label><input id="edit-name" class="form-input mt-1" value="${character.name}"></div>
                         <div><label class="text-gray-400">이미지 URL</label><input id="edit-image-url" class="form-input mt-1" value="${character.imageUrl || ''}"></div>
+                        <div>
+                        <label class="text-gray-400">궁극기 전용 이미지 URL</label>
+                         <input id="edit-ult-image" class="form-input mt-1" value="${character.ultImage || ''}" placeholder="궁극기 시전 시 보일 사진 링크">
+                        </div>
                         ${character.type === 'PC' ? `<div><label class="text-gray-400">PC 비밀번호</label><input id="edit-password" type="text" class="form-input mt-1" value="${character.password || DEFAULT_PC_PASSWORD}"></div>` : ''}
                         <div class="grid grid-cols-3 gap-4">
                             <div><label class="text-gray-400">HP</label><input id="edit-hp" type="number" class="form-input mt-1" value="${character.hp}"></div><div><label class="text-gray-400">최대 HP</label><input id="edit-max-hp" type="number" class="form-input mt-1" value="${character.maxHp}"></div>
@@ -4018,7 +4046,7 @@ function renderLoginStatus() {
                     minDefense: parseInt(document.getElementById('edit-min-defense').value),
                     maxDefense: parseInt(document.getElementById('edit-max-defense').value),
                     size: parseInt(document.getElementById('edit-size').value) || 1,
-                    
+                    ultImage: document.getElementById('edit-ult-image').value.trim(),
                     skills: [
                         document.getElementById('edit-skill-1').value, 
                         document.getElementById('edit-skill-2').value, 
