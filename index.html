@@ -1048,8 +1048,127 @@
     background: rgba(0, 0, 0, 0.1);
 }
 
+/* --- 궁극기 컷신 스타일 --- */
+#ultimate-cutscene {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(0, 0, 0, 0.85);
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#ultimate-cutscene.active {
+    display: flex !important; /* 자바스크립트에서 클래스를 넣었을 때 확실히 보이게 함 */
+    animation: cutscene-bg-fade 2s forwards;
+}
+
+.cutscene-content {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- 화면 흔들림 관련 코드를 삭제하고 아래 설정을 확인하세요 --- */
+
+.cutscene-image {
+    /* 1024x540 해상도 비율에 맞춘 최적화 크기 */
+    width: 80vw;              /* 화면 가로의 80% */
+    max-width: 1200px;        /* 너무 커지지 않게 제한 */
+    aspect-ratio: 1024 / 540; /* 원본 사진의 종횡비 고정 */
+    
+    background-size: contain; 
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* 해상도 선명도 강화 */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: high-quality;
+    
+    border-radius: 4px;
+    border: 2px solid rgba(212, 183, 131, 0.5);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+    
+    /* 애니메이션 효과에서 흔들림 제외, 슬라이드만 유지 */
+    transform: translateX(-150vw);
+    transition: none; /* 불필요한 떨림 방지 */
+}
+
+.active .cutscene-image {
+    animation: cutscene-slide-in 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cutscene-text {
+    position: absolute;
+    bottom: 20%;
+    font-size: 4rem;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 20px var(--accent-primary), 0 0 40px black;
+    opacity: 0;
+    transform: scale(0.5);
+}
+
+.active .cutscene-text {
+    animation: cutscene-text-pop 1.5s 0.5s ease-out forwards;
+}
+
+@keyframes cutscene-bg-fade {
+    0%, 100% { opacity: 0; }
+    20%, 80% { opacity: 1; }
+}
+
+@keyframes cutscene-slide-in {
+    0% { transform: translateX(-100vw) rotate(-10deg); }
+    40%, 60% { transform: translateX(0) rotate(0deg); }
+    100% { transform: translateX(100vw) rotate(10deg); }
+}
+
+@keyframes cutscene-text-pop {
+    0% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1.1); }
+    100% { opacity: 0; transform: scale(1.2); }
+}
+
+
     </style>
 </head>
+
+
+<button onclick="
+    const cs = document.getElementById('ultimate-cutscene');
+    const cimg = document.getElementById('cutscene-img');
+    const b = document.body;
+    // ⚠️ 반드시 이미지 파일의 '직접 주소'를 넣으세요 (.jpg, .png로 끝나는 주소)
+    const imageUrl = 'https://i.ibb.co/VcLsGTs0/image.jpg'; 
+
+    if(cimg) {
+        cimg.style.backgroundImage = `url('${imageUrl}')`;
+        cimg.style.borderRadius = '4px';
+        cimg.style.backgroundSize = '100% 100%'; // 컨테이너에 꽉 채움 (CSS aspect-ratio가 비율 유지)
+        cimg.innerHTML = ''; 
+    }
+
+    cs.style.display = 'flex';
+    cs.classList.add('active');
+    b.classList.add('shake-active');
+    
+    setTimeout(() => {
+        cs.classList.remove('active');
+        cs.style.display = 'none';
+        b.classList.remove('shake-active');
+    }, 2500);" 
+    class="fixed top-24 left-4 z-[200] bg-white text-black font-bold p-3 border-2 border-red-500 rounded shadow-lg">
+    🖼️ 초고화질 원본 비율 테스트
+</button>
+
+
+
 <body class="flex flex-col items-center justify-center min-h-screen p-4 overflow-x-hidden pt-60">
     <div id="drag-ghost" class="hidden absolute rounded-full z-[100] pointer-events-none w-16 h-16 border-2 border-dashed border-yellow-400 bg-black/30 backdrop-blur-sm"></div>
     <div id="turn-announcement-backdrop"></div> <div id="turn-announcement"></div>
@@ -1070,6 +1189,13 @@
         <button id="admin-panel-btn" class="text-white font-bold p-3 rounded-full shadow-lg z-50 transition-transform hover:scale-110" style="background-color: var(--accent-primary); color: var(--bg-primary) !important;">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
         </button>
+</div>
+
+<div id="ultimate-cutscene" style="display: none;">
+    <div class="cutscene-content">
+        <div id="cutscene-img" class="cutscene-image"></div>
+        <div id="cutscene-skill-name" class="cutscene-text font-title">궁극기 시전!</div>
+    </div>
 </div>
 
 <div id="login-status-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-[80] hidden">
@@ -1279,6 +1405,12 @@
         </div>
     </div>
 
+    <div id="ultimate-cutscene">
+        <div class="cutscene-content">
+            <div id="cutscene-img" class="cutscene-image"></div>
+            <div id="cutscene-skill-name" class="cutscene-text font-title">궁극기 시전!</div>
+        </div>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1394,11 +1526,26 @@ const combatTextStartTime = new Date();
         'resurrect': { id: 'resurrect', name: '부활의 주문', type: 'Heal', range: 1, rangeShape: 'diamond', multiplier: 0.3, icon: '👼', targetType: 'ALLY_DEAD', mpCost: 50, category: 'Support' }, // HP 30% 부활, MP 0으로
         'hp_transfer': { id: 'hp_transfer', name: '생명력 전달', type: 'Heal', range: 2, rangeShape: 'diamond', multiplier: 1.5, icon: '💖', targetType: 'ALLY', mpCost: 0, hpCost: 20, category: 'Support' }, // HP 20 소모, 30 회복
         'mp_transfer': { id: 'mp_transfer', name: '마나 전달', type: 'Support', range: 2, rangeShape: 'diamond', multiplier: 30, icon: '💧', targetType: 'ALLY', mpCost: 10, category: 'Support' }, // MP 10 소모, 30 MP 전달
+        // 궁극기    
+        'super_nova': { 
+        id: 'super_nova', 
+        name: '초신성 폭발', 
+        type: 'Ranged', 
+        range: 5, 
+        rangeShape: 'diamond', 
+        multiplier: 3.5, 
+        icon: '☀️', 
+        isAoe: true, 
+        aoeRange: 2, 
+        aoeShape: 'square', 
+        mpCost: 100, 
+        category: 'Ultimate' // 카테고리를 Ultimate로 설정
+    },
     };
     let SKILLS = {};
     
     // 스킬 카테고리 순서 정의
-    const SKILL_CATEGORIES = ['Attack', 'Support', 'Heal', 'Utility', 'Defense', 'Other'];
+    const SKILL_CATEGORIES = ['Ultimate', 'Attack', 'Support', 'Heal', 'Utility', 'Defense', 'Other'];
 
 
     // --- UI Elements ---
@@ -1510,7 +1657,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
     if (snapshot.empty) {
         const batch = writeBatch(db);
         const pcData = [ 
-            { name: "미장", img: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer'], order: 1 },
+            { name: "미장", img: "", type: 'PC', size: 1, skills: ['super_nova', 'slash', 'shoot', 'heal', 'hp_transfer'], order: 1 },
             { name: "천구", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 2 },
             { name: "이든", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 3 },
             { name: "삼다수", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 4 },
@@ -2504,8 +2651,8 @@ function isAttackPossible(attacker, target, attackRange) {
     const skill = SKILLS[skillId];
     if (!skill) return;
     
-    if (skill.mpCost > 0) await updateMP(attacker, -skill.mpCost);
-
+    //if (skill.mpCost > 0) await updateMP(attacker, -skill.mpCost);
+        
     const defenderToken = document.querySelector(`.character-token[data-char-id="${defender.id}"]`);
     if (defenderToken) {
         defenderToken.classList.add('hit-animation', 'show-hit-overlay');
@@ -2733,16 +2880,54 @@ async function applyStatusEffect(target, effectInfo) {
 
     return false; // 게임 계속됨
 }
-    async function executeSkill(attacker, target, skillId) {
+
+async function executeSkill(attacker, target, skillId) {
     const skill = SKILLS[skillId];
     if (!skill || !target) return;
 
-    let actionSucceeded = false;
+    // 1. 마나/체력 비용 체크 및 선지불
+    if (attacker.mp < (skill.mpCost || 0)) {
+        await logAction(`⚠️ ${attacker.name}의 마나가 부족합니다!`, "system");
+        return;
+    }
+
+    // --- 궁극기 연출 로직 (Category가 'Ultimate'일 때만) ---
+    if (skill.category === 'Ultimate') {
+        const cutscene = document.getElementById('ultimate-cutscene');
+        const cutsceneImg = document.getElementById('cutscene-img');
+        const cutsceneText = document.getElementById('cutscene-skill-name');
+
+        if (cutscene) {
+            // 연출 요소 준비
+            const portraitUrl = attacker.imageUrl || attacker.img || "";
+            if (cutsceneImg) {
+                cutsceneImg.style.backgroundImage = portraitUrl ? `url('${portraitUrl}')` : 'none';
+                cutsceneImg.innerHTML = portraitUrl ? '' : `<span class="text-6xl text-white font-title">${attacker.name[0]}</span>`;
+            }
+            if (cutsceneText) cutsceneText.textContent = skill.name;
+
+            // 연출 시작
+            cutscene.style.display = 'flex';
+            cutscene.classList.add('active');
+            document.body.classList.add('shake-active');
+
+            // 2.5초간 연출 대기 (이게 있어야 화면이 보입니다)
+            await new Promise(resolve => setTimeout(resolve, 2500));
+
+            // 연출 종료
+            document.body.classList.remove('shake-active');
+            cutscene.classList.remove('active');
+            cutscene.style.display = 'none';
+        }
+    }
+    // ----------------------------------------------
+let actionSucceeded = false;
     let affectedTargets = [];
 
-    if (skill.category === 'Attack') {
-        if (target.type === attacker.type) {
-            await logAction(`⚠️ ${attacker.name}은(는) 아군에게 공격할 수 없습니다.`, "system");
+    // 2. 실제 효과 적용 (공격/버프 등)
+    if (skill.category === 'Attack' || skill.category === 'Ultimate') { // 궁극기도 공격 판정에 포함
+        if (target.type === attacker.type && skill.category !== 'Ultimate') { // 궁극기는 아군 오사 방지 제외 가능
+            await logAction(`⚠️ 아군에게 사용할 수 없습니다.`, "system");
             return;
         }
 
@@ -2756,7 +2941,6 @@ async function applyStatusEffect(target, effectInfo) {
                 }
             }
         } else {
-            // 단일 공격 로직
             const success = await applyDamage(attacker, target, skillId);
             if (success) {
                 actionSucceeded = true;
