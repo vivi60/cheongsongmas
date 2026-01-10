@@ -1481,10 +1481,11 @@ const loginStatusModal = document.getElementById('login-status-modal');
     onAuthStateChanged(auth, (user) => {
         if (user) {
             userId = user.uid;
-            const savedGameId = localStorage.getItem('currentGameId');
-            if (savedGameId) { joinGame(savedGameId); } 
-            else { lobbyModal.classList.remove('hidden'); }
-        } else { signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error)); }
+            // 자동으로 이전 게임에 접속하지 않고 로비 모달을 띄웁니다.
+            lobbyModal.classList.remove('hidden');
+        } else {
+            signInAnonymously(auth).catch((error) => console.error("Anonymous sign-in failed:", error));
+        }
     });
     
     // --- Data Seeding ---
