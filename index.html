@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>게임 보드</title>
+    <title>좀비다!</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -991,6 +991,49 @@
     }
 }
 
+/* --- 로그 패널 레이아웃 수정 --- */
+#log-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* 부모 요소의 높이를 꽉 채우도록 변경 */
+    min-height: 800px; /* 최소 높이를 지정해서 왼쪽과 맞춤 (필요에 따라 조절) */
+}
+
+#chat-section, #log-section {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 내용이 넘치면 내부 스크롤 발생 */
+}
+
+/* 채팅 섹션 */
+
+#chat-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    margin-bottom: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+#chat-list li {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    word-break: break-all;
+}
+
+#chat-list .chat-name {
+    font-weight: bold;
+    color: var(--accent-primary);
+    margin-right: 4px;
+}
+
+/* 로그 섹션 */
+
+#game-log-list {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4 overflow-x-hidden pt-60">
@@ -1164,13 +1207,25 @@
 </div>
 
          
-        <div id="log-panel" class="panel lg:w-1/4 w-full p-6 shadow-lg">
-             <h2 class="text-lg font-bold pb-2 mb-4 font-title" style="color: var(--text-secondary); border-bottom: 1px solid var(--border-secondary);">게임 로그</h2>
-             <ul id="game-log-list" class="h-[75vh] overflow-y-auto space-y-2 text-sm pr-2">
-                <li class="log-system">게임 로그를 기다리는 중...</li>
-             </ul>
+<div id="log-panel" class="panel lg:w-1/4 w-full p-6 shadow-lg flex flex-col" style="height: 85vh; min-height: 800px;">
+    <div id="chat-section" class="flex-1 flex flex-col min-h-0 mb-4 border-b border-gray-700 pb-4">
+        <h2 class="text-lg font-bold pb-2 mb-2 font-title flex-shrink-0" style="color: var(--text-secondary);">채팅</h2>
+        <ul id="chat-list" class="flex-1 overflow-y-auto space-y-2 pr-2">
+            <li class="text-gray-500 text-xs">로그인 후 채팅이 가능합니다.</li>
+        </ul>
+        <div class="flex gap-1 mt-2 flex-shrink-0">
+            <input type="text" id="chat-input" placeholder="메시지 입력..." class="form-input text-xs p-2 flex-grow">
+            <button id="send-chat-btn" class="bg-[var(--accent-primary)] text-black px-3 py-1 text-xs font-bold">전송</button>
         </div>
     </div>
+
+    <div id="log-section" class="flex-1 flex flex-col min-h-0">
+        <h2 class="text-lg font-bold pb-2 mb-2 font-title flex-shrink-0" style="color: var(--text-secondary);">게임 로그</h2>
+        <ul id="game-log-list" class="flex-1 overflow-y-auto space-y-2 text-sm pr-2">
+            <li class="log-system">게임 로그를 기다리는 중...</li>
+        </ul>
+    </div>
+</div>
 
      
     <div id="profile-modal" class="modal-backdrop fixed inset-0 flex items-center justify-center p-4 z-50 hidden"><div id="modal-content" class="w-full max-w-[900px]"></div></div>
@@ -1244,6 +1299,7 @@
     let unsubscribeSettings = null;
     let unsubscribeLogs = null;
     let unsubscribeCombatEvents = null;
+    let unsubscribeChats = null;
 const combatTextStartTime = new Date();
     let previousTurnCharId = null; 
     let isBoardInitialized = false; 
@@ -1440,8 +1496,10 @@ const loginStatusModal = document.getElementById('login-status-modal');
     if (snapshot.empty) {
         const batch = writeBatch(db);
         const pcData = [ 
-            { name: "User1", img: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer'], order: 1 },
-            { name: "User2", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 3 },
+            { name: "미장", img: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer'], order: 1 },
+            { name: "천구", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 2 },
+            { name: "이든", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 3 },
+            { name: "삼다수", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer'], order: 4 },
         ];
         const enemyData = [ 
             { name: "Enemy1", img: "", type: 'ENEMY', size: 1, skills: ['slash'], order: 2 }, 
@@ -1468,6 +1526,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
     if (unsubscribeSettings) unsubscribeSettings();
     if (unsubscribeChars) unsubscribeChars();
     if (unsubscribeLogs) unsubscribeLogs();
+    if (unsubscribeChats) unsubscribeChats();
 
     unsubscribeSettings = onSnapshot(doc(db, 'games', gameId), async (docSnap) => { // async 추가
         if (docSnap.exists()) {
@@ -1670,6 +1729,10 @@ const loginStatusModal = document.getElementById('login-status-modal');
 
     unsubscribeLogs = onSnapshot(query(collection(db, "games", gameId, "logs"), orderBy("timestamp", "desc")), (snapshot) => {
         renderLogs(snapshot.docs.map(doc => doc.data()));
+    });
+    const chatQuery = query(collection(db, "games", gameId, "chats"), orderBy("timestamp", "asc"));
+    unsubscribeChats = onSnapshot(chatQuery, (snapshot) => {
+        renderChats(snapshot.docs.map(doc => doc.data()));
     });
 }
 
@@ -5165,6 +5228,49 @@ window.addEventListener('beforeunload', async (event) => {
         await updateDoc(doc(db, 'games', gameId, 'characters', loggedInCharId), { isLoggedIn: false });
     }
 });
+// 채팅 렌더링 함수
+function renderChats(chats) {
+    const chatList = document.getElementById('chat-list');
+    chatList.innerHTML = chats.map(chat => {
+        const time = chat.timestamp ? chat.timestamp.toDate().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
+        return `<li><span class="text-gray-500 text-[10px]">[${time}]</span> <span class="chat-name">${chat.sender}:</span> <span>${chat.message}</span></li>`;
+    }).join('');
+    chatList.scrollTop = chatList.scrollHeight; // 새 메시지 시 하단 스크롤
+}
+
+// 채팅 메시지 전송 함수
+async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const message = input.value.trim();
+    if (!gameId || !message) return;
+
+    // 발신자 이름 결정 (관리자 또는 로그인한 캐릭터)
+    let senderName = "시스템";
+    if (isAdmin) senderName = "관리자";
+    else if (loggedInCharId) {
+        const char = characters.find(c => c.id === loggedInCharId);
+        senderName = char ? char.name : "플레이어";
+    } else {
+        showCustomModal("알림", "채팅을 하려면 캐릭터로 로그인해주세요.", [{text:"확인", class:"bg-indigo-600"}]);
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, "games", gameId, "chats"), {
+            sender: senderName,
+            message: message,
+            timestamp: serverTimestamp()
+        });
+        input.value = '';
+    } catch (e) {
+        console.error("채팅 전송 실패:", e);
+    }
+}
+
+// 이벤트 리스너 등록 (가장 아래쪽 혹은 초기화 부분에 추가)
+document.getElementById('send-chat-btn').onclick = sendChat;
+document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter') sendChat(); };
+
 </script>
 </body>
 </html>
