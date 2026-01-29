@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -31,7 +32,7 @@
             --turn-highlight-color: #caa954;
             --bg-game-id: #1f2937;
             --bg-selection-overlay: linear-gradient(180deg, var(--bg-primary) 0%, rgba(36, 36, 36, 0.7) 100%);
-            --mp-color: #3B82F6;
+            --mp-color: #A855F7;
             
             --scrollbar-thumb: var(--accent-primary);
             --scrollbar-track: #2d2d2d;
@@ -64,7 +65,7 @@
             --log-admin: #6D28D9;
             --bg-game-id: #E5E7EB;
             --bg-selection-overlay: linear-gradient(180deg, var(--bg-primary) 0%, rgba(229, 231, 235, 0.7) 100%);
-            --mp-color: #1D4ED8;
+            --mp-color: #9333EA;
 
             
             --scrollbar-thumb: var(--accent-primary);
@@ -1508,8 +1509,7 @@ const combatTextStartTime = new Date();
         // NEW SKILLS
         'resurrect': { id: 'resurrect', name: '부활의 주문', type: 'Heal', range: 1, rangeShape: 'diamond', multiplier: 0.3, icon: '👼', targetType: 'ALLY_DEAD', mpCost: 50, category: 'Support' }, // HP 30% 부활, MP 0으로
         'hp_transfer': { id: 'hp_transfer', name: '생명력 전달', type: 'Heal', range: 2, rangeShape: 'diamond', multiplier: 1.5, icon: '💖', targetType: 'ALLY', mpCost: 0, hpCost: 20, category: 'Support' }, // HP 20 소모, 30 회복
-        'mp_transfer': { id: 'mp_transfer', name: '마나 전달', type: 'Support', range: 2, rangeShape: 'diamond', multiplier: 30, icon: '💧', targetType: 'ALLY', mpCost: 10, category: 'Support' }, // MP 10 소모, 30 MP 전달
-    // [기존] 미장 궁극기
+         // [기존] 미장 궁극기
         'super_nova': { 
             id: 'super_nova', name: '초신성 폭발', type: 'Ranged', range: 5, rangeShape: 'diamond', multiplier: 3.5, icon: '☀️', 
             isAoe: true, aoeRange: 2, aoeShape: 'square', mpCost: 1, category: 'Ultimate' 
@@ -1652,16 +1652,16 @@ const loginStatusModal = document.getElementById('login-status-modal');
         const batch = writeBatch(db);
         const pcData = [ 
                 // 미장: 초신성 폭발 추가
-                { name: "미장", img: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer', 'super_nova'], order: 1 },
+                { name: "미장", img: "", ultImage: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer', 'super_nova'], order: 1 },
                 
                 // 천구: 천벌 추가
-                { name: "천구", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'heaven_wrath'], order: 2 },
+                { name: "천구", img: "", ultImage: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'heaven_wrath'], order: 2 },
                 
                 // 이든: 에덴의 정원 추가
-                { name: "이든", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'eden_garden'], order: 3 },
+                { name: "이든", img: "", ultImage: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'eden_garden'], order: 3 },
                 
                 // 삼다수: 대해일 추가
-                { name: "삼다수", img: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'tsunami'], order: 4 },
+                { name: "삼다수", img: "", ultImage: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'tsunami'], order: 4 },
             ];
         const enemyData = [ 
             { name: "Enemy1", img: "", type: 'ENEMY', size: 1, skills: ['slash'], order: 2 }, 
@@ -1672,12 +1672,22 @@ const loginStatusModal = document.getElementById('login-status-modal');
         [...pcData, ...enemyData].forEach(char => {
             const charPassword = char.type === 'PC' ? DEFAULT_PC_PASSWORD : ''; 
             const newChar = { 
-                name: char.name, imageUrl: char.img || '', type: char.type, size: char.size, 
-                hp: 100, maxHp: 100, mp: 50, maxMp: 50, 
-                minAttack: 12, maxAttack: 18, minDefense: 3, maxDefense: 7, 
-                x: null, y: null, skills: char.skills || [], turnOrder: char.order, 
-                password: charPassword, isAuto: false, statusEffects: [],
-                isLoggedIn: false // [추가] 로그인 상태 필드 추가
+                name: char.name, 
+                imageUrl: char.img || '', 
+                ultImage: char.ultImage || '',
+                type: char.type, 
+                size: char.size, 
+                hp: 100, maxHp: 100, 
+                mp: 0, maxMp: 100, // ★ 수정됨: 0에서 시작 (최대 100)
+                minAttack: 12, maxAttack: 18, 
+                minDefense: 3, maxDefense: 7, 
+                x: null, y: null, 
+                skills: char.skills || [], 
+                turnOrder: char.order, 
+                password: charPassword, 
+                isAuto: false, 
+                statusEffects: [],
+                isLoggedIn: false
             };
             batch.set(doc(charCollectionRef), newChar);
         });
@@ -2592,46 +2602,41 @@ function isAttackPossible(attacker, target, attackRange) {
             }
         }, moved ? 1500 : 500);
     }
-    async function updateTurnIndex(newIndex, reverse = false) {
-    if (characters.length === 0 || !gameId) return;
+        async function updateTurnIndex(newIndex, reverse = false) {
+        if (characters.length === 0 || !gameId) return;
 
-    let newRound = round;
-    if (!reverse && newIndex < currentTurnIndex) {
-        newRound++;
-        await logAction(`▶️ 라운드 ${newRound} 시작`, "system");
-    } else if (reverse && newIndex > currentTurnIndex) {
-        if (newRound > 1) {
-            newRound--;
-            await logAction(`◀️ 이전 라운드로 돌아갑니다. (라운드 ${newRound})`, "system");
-        }
-    }
-    
-    currentTurnIndex = newIndex % characters.length;
-    const currentTurnChar = characters[currentTurnIndex];
-    const currentTurnCharId = currentTurnChar?.id || null;
-
-    if (maxRounds > 0 && newRound > maxRounds) {
-        await logAction(`- 전투 종료: 최대 라운드 도달 -`, "system");
-        await showGameSummaryModal("시간 종료", `최대 라운드(${maxRounds})에 도달하여 전투가 종료되었습니다.`);
-        return;
-    } 
-    
-    await setDoc(doc(db, 'games', gameId), { round: newRound, currentTurnIndex, currentTurnCharId }, { merge: true });
-    
-     if (gameState === 'STARTED' && currentTurnChar && !reverse) {
-
-        const isGameOver = await checkGameEndCondition();
-        if (isGameOver) return;
-
-        const newMp = Math.min(currentTurnChar.maxMp, currentTurnChar.mp + MP_REGEN_PER_TURN);
-        if (newMp > currentTurnChar.mp) {
-            await updateDoc(doc(db, 'games', gameId, 'characters', currentTurnChar.id), { mp: newMp });
-            await logAction(`💧 ${currentTurnChar.name}이(가) **${MP_REGEN_PER_TURN} MP**를 회복했습니다.`, "system");
+        let newRound = round;
+        if (!reverse && newIndex < currentTurnIndex) {
+            newRound++;
+            await logAction(`▶️ 라운드 ${newRound} 시작`, "system");
+        } else if (reverse && newIndex > currentTurnIndex) {
+            if (newRound > 1) {
+                newRound--;
+                await logAction(`◀️ 이전 라운드로 돌아갑니다. (라운드 ${newRound})`, "system");
+            }
         }
         
-        await checkAndApplyTileDamage(currentTurnChar);
+        currentTurnIndex = newIndex % characters.length;
+        const currentTurnChar = characters[currentTurnIndex];
+        const currentTurnCharId = currentTurnChar?.id || null;
+
+        if (maxRounds > 0 && newRound > maxRounds) {
+            await logAction(`- 전투 종료: 최대 라운드 도달 -`, "system");
+            await showGameSummaryModal("시간 종료", `최대 라운드(${maxRounds})에 도달하여 전투가 종료되었습니다.`);
+            return;
+        } 
+        
+        await setDoc(doc(db, 'games', gameId), { round: newRound, currentTurnIndex, currentTurnCharId }, { merge: true });
+        
+        // ★ [수정됨] MP 자동 변화 로직을 완전히 제거했습니다.
+        // 이제 턴이 지나도 감염도는 그대로 유지됩니다.
+        if (gameState === 'STARTED' && currentTurnChar && !reverse) {
+            const isGameOver = await checkGameEndCondition();
+            if (isGameOver) return;
+            
+            await checkAndApplyTileDamage(currentTurnChar);
+        }
     }
-}
 
 
     async function nextTurn() {
@@ -3610,6 +3615,7 @@ function renderSkillButtons(selectedChar) {
     const listContent = document.getElementById('char-list-content');
     listContent.innerHTML = '';
     
+    // 전체 생존/배치 수 카운트 (기존 유지)
     const remainingPC = characters.filter(c => c.type === 'PC' && c.hp > 0 && c.x !== null).length;
     const remainingEnemy = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null).length;
 
@@ -3621,37 +3627,51 @@ function renderSkillButtons(selectedChar) {
         return;
     }
     
-    characters.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-
-    characters.forEach(char => {
-        const isActionablePC = roundPhase === 'PLAYER_PHASE' && char.type === 'PC' && !char.hasActedThisRound && char.hp > 0 && char.x !== null;
-
-        const charItem = document.createElement('div');
-        charItem.className = `p-2 rounded-md flex flex-col cursor-pointer ${char.id === selectedCharacterId ? 'ring-2 ring-green-400' : 'hover:bg-gray-800'}`;
-        
-        let statusColor = char.hp <= 0 ? 'text-gray-500' : (char.type === 'ENEMY' ? 'text-red-400' : 'text-gray-300');
-        if (isActionablePC) statusColor = 'text-yellow-400';
-
-        charItem.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <img src="${char.imageUrl || `https://placehold.co/32x32/1f2937/a0aec0?text=${char.name.charAt(0)}`}" class="w-8 h-8 rounded-full object-cover">
-                    <span class="font-semibold truncate">${char.name}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs ${statusColor}">${char.hp <= 0 ? '사망' : (char.x !== null ? `HP: ${char.hp}/${char.maxHp}` : '미배치')}</span>
-                </div>
-            </div>
-        `;
-        
-        charItem.onclick = () => {
-            if ((isActionablePC && canControlCharacter(char.id)) || (isAdmin && char.type === 'PC')) {
-                const fakeEvent = { target: document.querySelector(`[data-char-id="${char.id}"]`) };
-                handleCombatClick(fakeEvent);
-            }
-        };
-        listContent.appendChild(charItem);
+    // [수정됨] 정렬 로직 변경: PC 우선 -> 이후 이름순
+    characters.sort((a, b) => {
+        // 1. 타입 비교: PC가 무조건 앞으로 오게 설정
+        if (a.type !== b.type) {
+            return a.type === 'PC' ? -1 : 1; 
+        }
+        // 2. 같은 타입끼리는 이름순(가나다) 정렬
+        return a.name.localeCompare(b.name, 'ko');
     });
+
+    // 배치된 캐릭터만 필터링하여 표시
+    characters
+        .filter(char => char.x !== null) 
+        .forEach(char => {
+            const isActionablePC = roundPhase === 'PLAYER_PHASE' && char.type === 'PC' && !char.hasActedThisRound && char.hp > 0;
+
+            const charItem = document.createElement('div');
+            charItem.className = `p-2 rounded-md flex flex-col cursor-pointer ${char.id === selectedCharacterId ? 'ring-2 ring-green-400' : 'hover:bg-gray-800'}`;
+            
+            let statusColor = char.hp <= 0 ? 'text-gray-500' : (char.type === 'ENEMY' ? 'text-red-400' : 'text-gray-300');
+            if (isActionablePC) statusColor = 'text-yellow-400';
+
+            charItem.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <img src="${char.imageUrl || `https://placehold.co/32x32/1f2937/a0aec0?text=${char.name.charAt(0)}`}" class="w-8 h-8 rounded-full object-cover">
+                        <span class="font-semibold truncate">${char.name}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs ${statusColor}">${char.hp <= 0 ? '사망' : `HP: ${char.hp}/${char.maxHp}`}</span>
+                    </div>
+                </div>
+            `;
+            
+            charItem.onclick = () => {
+                if ((isActionablePC && canControlCharacter(char.id)) || (isAdmin && char.type === 'PC')) {
+                    const targetToken = document.querySelector(`[data-char-id="${char.id}"]`);
+                    if (targetToken) {
+                        const fakeEvent = { target: targetToken };
+                        handleCombatClick(fakeEvent);
+                    }
+                }
+            };
+            listContent.appendChild(charItem);
+        });
 }
 
     async function deleteCharacter(charId, charName) {
@@ -4110,7 +4130,7 @@ function renderLoginStatus() {
         const statIcon = (type) => ({
             hp: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>`,
             defense: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3z" /></svg>`,
-mp: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2.25c-5.385 5.965-8.25 10.561-8.25 14.25a8.25 8.25 0 1016.5 0c0-3.689-2.865-8.285-8.25-14.25z"></path></svg>`,        }[type] || '');
+            inf: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.5 17l-.5-1-.5 1h1z M15 22a1 1 0 0 0 1-1v-1a2 2 0 0 0 1.56-3.25 8 8 0 1 0-11.12 0A2 2 0 0 0 8 20v1a1 1 0 0 0 1 1z M9 12a1 1 0 1 0 2 0 1 1 0 1 0-2 0 M15 12a1 1 0 1 0 2 0 1 1 0 1 0-2 0"></path></svg>`,        }[type] || '');
         const attackIconSvg = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 4.6a2 2 0 0 0-2.8 0l-9.5 9.5-3.5-1.5a1 1 0 0 0-1.1.2l-1.3 1.3a1 1 0 0 0 0 1.4l2.6 2.6-2.1 2.1a1 1 0 1 0 1.4 1.4l2.1-2.1 2.6 2.6a1 1 0 0 0 1.4 0l1.3-1.3a1 1 0 0 0 .2-1.1l-1.5-3.5 9.5-9.5a2 2 0 0 0 0-2.8z"></path></svg>`;
         
         const sizeIconSvg = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>`;
@@ -4138,7 +4158,7 @@ mp: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <p class="profile-char-type">${character.type}</p>
                         <div class="profile-stats-grid">
                             ${buildStat('hp', '생명력', `${character.hp} / ${character.maxHp}`)}
-                            ${buildStat('mp', '마나', `${character.mp} / ${character.maxMp}`)}
+                            ${buildStat('inf', '감염도', `${character.mp} / ${character.maxMp}`)}
                             ${buildStat('attack', '공격력', `${character.minAttack} - ${character.maxAttack}`)}
                             ${buildStat('defense', '방어력', `${character.minDefense} - ${character.maxDefense}`)}
                             ${buildStat('move', '이동력', `${effectiveMoveRange} 칸`)}
@@ -4863,7 +4883,7 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
                 <select id="new-char-type" class="form-input bg-gray-700"><option value="PC">PC</option><option value="ENEMY">ENEMY</option></select>
                 <input id="new-char-imageUrl" placeholder="이미지 URL" class="form-input col-span-2">
                 <div class="relative"><input id="new-char-hp" type="number" placeholder=" " class="form-input peer" value="100"><label for="new-char-hp" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">HP (체력)</label></div>
-                <div class="relative"><input id="new-char-mp" type="number" placeholder=" " class="form-input peer" value="50"><label for="new-char-mp" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">MP (마나)</label></div>
+                <div class="relative"><input id="new-char-mp" type="number" placeholder=" " class="form-input peer" value="50"><label for="new-char-mp" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">INF (감염도)</label></div>
                 <div class="relative"><input id="new-char-min-attack" type="number" placeholder=" " class="form-input peer" value="10"><label for="new-char-min-attack" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최소 공격력</label></div>
                 <div class="relative"><input id="new-char-max-attack" type="number" placeholder=" " class="form-input peer" value="15"><label for="new-char-max-attack" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최대 공격력</label></div>
                 <div class="relative"><input id="new-char-min-defense" type="number" placeholder=" " class="form-input peer" value="3"><label for="new-char-min-defense" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최소 방어력</label></div>
