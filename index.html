@@ -1179,6 +1179,19 @@
 
      
     <div id="turn-announcement-backdrop"></div> <div id="turn-announcement"></div>
+    <div id="youtube-player-wrapper" style="position: fixed; top: -9999px; left: -9999px; visibility: hidden;">
+        <div id="youtube-player"></div>
+    </div>
+
+    <div id="bgm-local-controls" class="fixed bottom-16 right-2 z-50 flex flex-col items-end gap-2 hidden">
+        <div class="bg-black/80 text-white text-xs px-2 py-1 rounded mb-1 hidden" id="bgm-now-playing">
+            🎵 음악 재생 중...
+        </div>
+        <button id="bgm-toggle-btn" class="info-button p-3 rounded-full transition-transform hover:scale-110 bg-gray-800 text-white border border-gray-600">
+            <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+            <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+        </button>
+    </div>
 <div id="utility-controls">
     <button id="login-status-btn" class="info-button p-3 rounded-full transition-transform hover:scale-110 hidden">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.122-1.28-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.122-1.28.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -1718,6 +1731,11 @@ const loginStatusModal = document.getElementById('login-status-modal');
     unsubscribeSettings = onSnapshot(doc(db, 'games', gameId), async (docSnap) => {
     if (docSnap.exists()) {
         const data = docSnap.data();
+        // ★ [여기] BGM 데이터 동기화 코드 추가
+        if (data.bgm) {
+            syncBgmPlayer(data.bgm);
+            currentBgmData = data.bgm;
+        }
         const oldGameState = gameState;
         const oldRoundPhase = roundPhase;
 
@@ -1948,6 +1966,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
     unsubscribeChats = onSnapshot(chatQuery, (snapshot) => {
         renderChats(snapshot.docs.map(doc => doc.data()));
     });
+    
 }
 
 async function triggerCombatText(character, text, type) {
@@ -4463,6 +4482,39 @@ async function resetAllCharacterStats() {
     <input type="file" id="load-settings-input" class="hidden" accept=".json">
 </div>`;
 
+// [추가] BGM 관리자 패널
+        modalHtml += `<div class="mb-8 p-4 border border-gray-700 rounded-md">
+            <h4 class="font-bold text-lg mb-4 text-pink-400">🎵 BGM 플레이리스트 (유튜브)</h4>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">유튜브 링크 (URL)</label>
+                    <div class="flex gap-2">
+                        <input id="admin-bgm-url" type="text" class="form-input flex-grow" placeholder="https://www.youtube.com/watch?v=...">
+                        <button id="admin-bgm-play-btn" class="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded">재생</button>
+                    </div>
+                </div>
+                <div class="flex gap-2 justify-between items-center bg-gray-800 p-2 rounded">
+                    <div class="flex gap-2">
+                        <button id="admin-bgm-pause-btn" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1 rounded text-sm">일시정지</button>
+                        <button id="admin-bgm-stop-btn" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm">정지</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-gray-400">기본 볼륨</span>
+                        <input id="admin-bgm-volume" type="range" min="0" max="100" value="${currentBgmData.volume || 50}" class="w-24">
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">빠른 실행 (즐겨찾기)</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="bgm-preset-btn bg-gray-700 hover:bg-gray-600 text-xs px-2 py-1 rounded text-gray-300" data-url="https://www.youtube.com/watch?v=5qap5aO4i9A">Lofi Girl</button>
+                        <button class="bgm-preset-btn bg-gray-700 hover:bg-gray-600 text-xs px-2 py-1 rounded text-gray-300" data-url="https://www.youtube.com/watch?v=jfKfPfyJRdk">Lofi Girl 2</button>
+                        <button class="bgm-preset-btn bg-gray-700 hover:bg-gray-600 text-xs px-2 py-1 rounded text-gray-300" data-url="https://www.youtube.com/watch?v=5YX6_t89eYY">전투 BGM</button>
+                        <button class="bgm-preset-btn bg-gray-700 hover:bg-gray-600 text-xs px-2 py-1 rounded text-gray-300" data-url="https://www.youtube.com/watch?v=eHnL0H8WugY">긴장감</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
 modalHtml += `<div class="mb-8 p-4 border border-gray-700 rounded-md">
             <h4 class="font-bold text-lg mb-4 text-yellow-400">맵/지형 및 배경 관리</h4>
             <button id="open-map-edit-btn" class="w-full bg-purple-600 p-2 font-bold ${gameState !== 'PREPARATION' ? 'opacity-50 cursor-not-allowed' : ''}" ${gameState !== 'PREPARATION' ? 'disabled' : ''}>맵 편집 모드 ${isMapEditMode ? '종료' : '시작'}</button>
@@ -4529,6 +4581,36 @@ modalHtml += `<div class="mb-8 p-4 border border-gray-700 rounded-md">
 
         container.innerHTML = modalHtml;
 
+        // [BGM 관리자 이벤트 리스너 - 위치 이동됨]
+        const bgmPlayBtn = document.getElementById('admin-bgm-play-btn');
+        if (bgmPlayBtn) { // 버튼이 있을 때만 실행하도록 안전장치 추가
+            bgmPlayBtn.onclick = async () => {
+                const url = document.getElementById('admin-bgm-url').value.trim();
+                const videoId = extractVideoID(url);
+                if (videoId) {
+                    await updateBgmState({ videoId: videoId, isPlaying: true, timestamp: Date.now() });
+                    await logAction("🎵 관리자가 BGM을 변경했습니다.", "system");
+                } else {
+                    showCustomModal("오류", "유효한 유튜브 URL이 아닙니다.", [{text:"확인", class:"bg-red-600"}]);
+                }
+            };
+            document.getElementById('admin-bgm-pause-btn').onclick = async () => {
+                await updateBgmState({ isPlaying: false });
+            };
+            document.getElementById('admin-bgm-stop-btn').onclick = async () => {
+                await updateBgmState({ videoId: '', isPlaying: false });
+            };
+            document.getElementById('admin-bgm-volume').onchange = async (e) => {
+                const vol = parseInt(e.target.value);
+                await updateBgmState({ volume: vol });
+            };
+            document.querySelectorAll('.bgm-preset-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.getElementById('admin-bgm-url').value = btn.dataset.url;
+                };
+            });
+        }
+        
         const skillListContainer = container.querySelector('#admin-skill-list');
         if (skillListContainer) {
             skillListContainer.addEventListener('click', e => {
@@ -5571,6 +5653,147 @@ async function sendChat() {
 // 이벤트 리스너 등록 (가장 아래쪽 혹은 초기화 부분에 추가)
 document.getElementById('send-chat-btn').onclick = sendChat;
 document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter') sendChat(); };
+
+// --- BGM Variables ---
+    let player = null; // 유튜브 플레이어 객체
+    let isYoutubeReady = false; // API 로드 완료 여부
+    let localVolume = 50; // 로컬 볼륨
+    let isLocalMuted = false;
+    let currentBgmData = { videoId: '', isPlaying: false, volume: 50 };
+
+// ==========================================
+    // [추가] 유튜브 BGM 시스템 로직
+    // ==========================================
+
+    // 1. 유튜브 IFrame API 스크립트 로드
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    // 2. API 준비되었을 때 호출되는 전역 함수
+    window.onYouTubeIframeAPIReady = function() {
+        player = new YT.Player('youtube-player', {
+            height: '200',
+            width: '200',
+            videoId: '', // 초기엔 없음
+            playerVars: {
+                'playsinline': 1,
+                'controls': 0, // 컨트롤 숨김
+                'loop': 1,     // 반복 재생 힌트 (playlist 필요)
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange
+            }
+        });
+    };
+
+    function onPlayerReady(event) {
+        isYoutubeReady = true;
+        // 로드 완료 시 초기 볼륨 설정
+        if(player && player.setVolume) player.setVolume(localVolume);
+        
+        // 기존에 데이터가 있었다면 동기화 시도
+        if (currentBgmData && currentBgmData.videoId) {
+            syncBgmPlayer(currentBgmData);
+        }
+    }
+
+    function onPlayerStateChange(event) {
+        if (event.data === YT.PlayerState.ENDED) {
+            // 한 곡 반복 재생을 위해 끝났을 때 다시 재생
+            if(currentBgmData.isPlaying) player.playVideo(); 
+        }
+    }
+
+    // 3. Firestore 데이터와 플레이어 동기화
+    function syncBgmPlayer(bgmData) {
+        if (!player || !isYoutubeReady) return;
+
+        // 로컬 UI 표시 여부
+        const controlsDiv = document.getElementById('bgm-local-controls');
+        if (bgmData.videoId && bgmData.isPlaying) {
+            controlsDiv.classList.remove('hidden');
+            document.getElementById('bgm-now-playing').classList.remove('hidden');
+            setTimeout(() => document.getElementById('bgm-now-playing').classList.add('hidden'), 5000); // 5초 뒤 숨김
+        } else {
+            // 음악이 없으면 버튼 숨김 (선택 사항)
+             // controlsDiv.classList.add('hidden'); 
+        }
+
+        // 비디오 변경 체크
+        const currentVideoUrl = player.getVideoUrl();
+        // getVideoUrl은 전체 주소를 반환하므로 ID 포함 여부 확인
+        const isSameVideo = currentVideoUrl && currentVideoUrl.includes(bgmData.videoId);
+
+        if (bgmData.videoId && !isSameVideo) {
+            player.loadVideoById(bgmData.videoId);
+        } else if (!bgmData.videoId) {
+            player.stopVideo();
+            return;
+        }
+
+        // 재생/정지 상태 동기화
+        const playerState = player.getPlayerState();
+        if (bgmData.isPlaying) {
+            if (playerState !== YT.PlayerState.PLAYING && playerState !== YT.PlayerState.BUFFERING) {
+                player.playVideo();
+            }
+        } else {
+            if (playerState === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+            }
+        }
+
+        // 볼륨 동기화 (관리자 설정 볼륨 * 로컬 볼륨 비율)
+        // 관리자가 100으로 틀어도, 내가 로컬을 50으로 줄이면 50으로 들림
+        const adminVolume = bgmData.volume || 50;
+        const finalVolume = (adminVolume * (isLocalMuted ? 0 : 1)); // 로컬 음소거 반영
+        
+        if (player.setVolume) {
+             player.setVolume(finalVolume);
+        }
+    }
+
+    // 4. 관리자용: Firestore 업데이트 함수
+    async function updateBgmState(updates) {
+        if (!gameId) return;
+        // 기존 데이터와 병합
+        const newData = { ...currentBgmData, ...updates };
+        await setDoc(doc(db, 'games', gameId), { bgm: newData }, { merge: true });
+    }
+
+    // 5. 유틸리티: 유튜브 URL에서 ID 추출
+    function extractVideoID(url) {
+        var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+        var match = url.match(regExp);
+        return (match && match[7].length == 11) ? match[7] : false;
+    }
+
+    // 6. 로컬 컨트롤러 이벤트 리스너
+    const bgmToggleBtn = document.getElementById('bgm-toggle-btn');
+    bgmToggleBtn.addEventListener('click', () => {
+        isLocalMuted = !isLocalMuted;
+        
+        const iconOn = document.getElementById('icon-sound-on');
+        const iconOff = document.getElementById('icon-sound-off');
+        
+        if (isLocalMuted) {
+            iconOn.classList.add('hidden');
+            iconOff.classList.remove('hidden');
+            bgmToggleBtn.classList.add('bg-red-900');
+            bgmToggleBtn.classList.remove('bg-gray-800');
+        } else {
+            iconOn.classList.remove('hidden');
+            iconOff.classList.add('hidden');
+            bgmToggleBtn.classList.remove('bg-red-900');
+            bgmToggleBtn.classList.add('bg-gray-800');
+        }
+        
+        // 볼륨 즉시 적용
+        syncBgmPlayer(currentBgmData);
+    });
 
 </script>
 </body>
