@@ -459,17 +459,9 @@
             margin: 0 auto;
             border-radius: 1px;
         }
-        .mp-bar {
-            height: 2px; 
-            background-color: #111827;
-            overflow: hidden;
-            width: 90%;
-            margin: 0 auto;
-            border-radius: 1px;
-        }
+       
         .hp-fill { background-color: #EF4444; height: 100%; transition: width 0.3s; }
-        .mp-fill { background-color: var(--mp-color); height: 100%; transition: width 0.3s; }
-
+        
         html:not(.light) .character-token:not(.enemy-token) {
             box-shadow: 0 0 8px rgba(212, 183, 131, 0.4), 0 0 10px rgba(0,0,0,0.5);
         }
@@ -1168,6 +1160,68 @@
     font-size: 0.8em;
     font-weight: bold; /* ★ 굵게 강조 */
 }
+
+/* [추가] 파괴 가능한 장애물 스타일 */
+        .cell.tile-destructible {
+            background-color: #78350f; /* 진한 갈색 */
+            background-image: 
+                linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2)), 
+                linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2));
+            background-size: 10px 10px;
+            background-position: 0 0, 5px 5px;
+            cursor: crosshair;
+            border: 1px solid #92400e;
+        }
+
+        /* [추가] 장애물 HP 바 */
+        .tile-hp-bar {
+            position: absolute;
+            bottom: 2px;
+            left: 10%;
+            width: 80%;
+            height: 4px;
+            background-color: #000;
+            border-radius: 2px;
+            overflow: hidden;
+            z-index: 5;
+        }
+        .tile-hp-fill {
+            height: 100%;
+            background-color: #fbbf24; /* 노란색 */
+            transition: width 0.3s ease;
+        }
+
+        /* [추가] 보드 흔들림 효과 */
+@keyframes shake-board {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.shake-active {
+    animation: shake-board 0.5s; /* 0.5초 동안 흔들림 */
+}
+
+/* [추가] 파편 조각 스타일 */
+/* [수정됨] 파편 조각 스타일 (더 잘 보이게) */
+.wall-debris {
+    position: fixed;
+    background-color: #92400e; /* 더 밝은 갈색 */
+    border: 1px solid #fcd34d; /* 노란색 테두리로 눈에 띄게 */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5); /* 그림자 추가 */
+    pointer-events: none;
+    z-index: 150;
+    border-radius: 2px;
+}
+
     </style>
 </head>
 
@@ -1183,13 +1237,29 @@
         <div id="youtube-player"></div>
     </div>
 
-    <div id="bgm-local-controls" class="fixed bottom-16 right-2 z-50 flex flex-col items-end gap-2 hidden">
-        <div class="bg-black/80 text-white text-xs px-2 py-1 rounded mb-1 hidden" id="bgm-now-playing">
-            🎵 음악 재생 중...
+    <div id="bgm-local-controls" class="fixed bottom-20 right-4 z-50 hidden group">
+        <div class="absolute bottom-full right-0 mb-2 whitespace-nowrap text-xs px-2 py-1 rounded hidden transition-opacity group-hover:opacity-0" 
+             id="bgm-now-playing"
+             style="background-color: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-secondary);">
+            음악 재생 중...
         </div>
-        <button id="bgm-toggle-btn" class="info-button p-3 rounded-full transition-transform hover:scale-110 bg-gray-800 text-white border border-gray-600">
+
+        <div id="bgm-slider-container" 
+             class="absolute bottom-full right-0 mb-3 p-3 rounded-2xl shadow-xl backdrop-blur-sm transition-all duration-300 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-[.show-slider]:opacity-100 group-[.show-slider]:visible group-[.show-slider]:translate-y-0 flex flex-col items-center gap-2"
+             style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-primary);">
+            
+            <span class="text-xs font-medium">Volume</span>
+            
+            <input id="local-volume-slider" type="range" min="0" max="100" value="50" 
+                   class="w-24 h-1.5 rounded-lg appearance-none cursor-pointer"
+                   style="background-color: var(--bg-tertiary); accent-color: var(--accent-primary);">
+        </div>
+
+        <button id="bgm-toggle-btn" 
+                class="info-button p-3 rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 flex items-center justify-center" 
+                aria-label="볼륨 조절">
             <svg id="icon-sound-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
-            <svg id="icon-sound-off" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+            <svg id="icon-sound-off" class="w-6 h-6 hidden text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
         </button>
     </div>
 <div id="utility-controls">
@@ -1404,11 +1474,12 @@
              
             <p class="mb-4 text-gray-400">보드 칸을 클릭하여 지형을 설정하세요. 준비 단계에서만 작동합니다.</p>
             <div class="space-y-4">
-                <div class="flex gap-4 p-4 border border-gray-700 rounded-md">
-                    <button data-tile-type="normal" class="tile-select-btn flex-grow p-3 bg-gray-600 hover:bg-gray-500 text-white">일반 칸</button>
-                    <button data-tile-type="obstacle" class="tile-select-btn flex-grow p-3 bg-gray-700 hover:bg-gray-600 text-white tile-obstacle">장애물 (이동 불가) 🚫</button>
-                    <button data-tile-type="damage" class="tile-select-btn flex-grow p-3 bg-red-800 hover:bg-red-700 text-white tile-damage">대미지 칸 (턴 시작 시 $10$ 피해) 🩸</button>
-                </div>
+                <div class="flex gap-4 p-4 border border-gray-700 rounded-md flex-wrap">
+    <button data-tile-type="normal" class="tile-select-btn flex-grow p-3 bg-gray-600 hover:bg-gray-500 text-white">일반 칸</button>
+    <button data-tile-type="obstacle" class="tile-select-btn flex-grow p-3 bg-gray-700 hover:bg-gray-600 text-white tile-obstacle">완전 장애물 (이동 불가) 🚫</button>
+    <button data-tile-type="destructible" class="tile-select-btn flex-grow p-3 bg-yellow-800 hover:bg-yellow-700 text-white tile-destructible">파괴 벽 (HP 30) 🧱</button> 
+    <button data-tile-type="damage" class="tile-select-btn flex-grow p-3 bg-red-800 hover:bg-red-700 text-white tile-damage">대미지 칸 (턴 시작 시 10 피해) 🩸</button>
+</div>
                 <div id="map-edit-status" class="text-center font-bold text-lg text-green-400">현재 선택: 일반 칸</div>
                 <button id="exit-map-edit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3">맵 편집 종료</button>
             </div>
@@ -1510,58 +1581,44 @@ const combatTextStartTime = new Date();
     const MP_REGEN_PER_TURN = 10; // New: Mana regeneration per turn
 
     const DEFAULT_SKILLS = {
-        'move': { id: 'move', name: '이동', type: 'Utility', range: 1, rangeShape: 'diamond', multiplier: 0, icon: '🏃', mpCost: 0, category: 'Utility' }, // 기본 이동 거리를 1로 설정
-        'slash': { id: 'slash', name: '베기', type: 'Melee', range: 1, rangeShape: 'diamond', multiplier: 1.5, icon: '⚔️', mpCost: 5, category: 'Attack' },
-        'stomp': { id: 'stomp', name: '발 구르기', type: 'Melee', range: 1, rangeShape: 'square', multiplier: 1.2, icon: '💥', mpCost: 8, category: 'Attack'},
-        'crosscut': { id: 'crosscut', name: '십자 베기', type: 'Melee', range: 2, rangeShape: 'cross', multiplier: 1.0, icon: '十', mpCost: 10, category: 'Attack'},
-        'binding_chains': { id: 'binding_chains', name: '속박의 사슬', type: 'Melee', range: 1, rangeShape: 'square', multiplier: 1.0, icon: '🔗', mpCost: 20, category: 'Attack', appliesEffect: { id: 'stunned', turns: 1 }},
-        'poison': { 
-            id: 'poison', 
-            name: '중독', 
-            type: 'Melee', 
+
+        'move': { 
+            id: 'move', 
+            name: '이동', 
+            type: 'Utility', 
             range: 1, 
             rangeShape: 'diamond', 
-            multiplier: 0.5, // 초기 피해는 약하게 설정
-            icon: '☠️', 
-            mpCost: 15, 
-            category: 'Attack',
-            // 3턴 동안 턴마다 10의 피해를 주는 효과
-            appliesEffect: { id: 'poisoned', turns: 3, value: 10 } 
-        },
-        'shoot': { id: 'shoot', name: '사격', type: 'Ranged', range: 4, rangeShape: 'diamond', multiplier: 1.0, icon: '🏹', mpCost: 5, category: 'Attack' },
-        'fireball': { id: 'fireball', name: '화염구', type: 'Ranged', range: 3, rangeShape: 'square', multiplier: 1.0, icon: '🔥', isAoe: true, aoeRange: 1, aoeShape: 'square', mpCost: 15, category: 'Attack' },
-        'heal': { id: 'heal', name: '치유의 빛', type: 'Heal', range: 2, rangeShape: 'diamond', multiplier: 1.0, icon: '✨', targetType: 'ALLY', mpCost: 10, category: 'Support' },
-        
-        // NEW SKILLS
-        'resurrect': { id: 'resurrect', name: '부활의 주문', type: 'Heal', range: 1, rangeShape: 'diamond', multiplier: 0.3, icon: '👼', targetType: 'ALLY_DEAD', mpCost: 50, category: 'Support' }, // HP 30% 부활, MP 0으로
-        'hp_transfer': { id: 'hp_transfer', name: '생명력 전달', type: 'Heal', range: 2, rangeShape: 'diamond', multiplier: 1.5, icon: '💖', targetType: 'ALLY', mpCost: 0, hpCost: 20, category: 'Support' }, // HP 20 소모, 30 회복
-         // [기존] 미장 궁극기
-        'super_nova': { 
-            id: 'super_nova', name: '초신성 폭발', type: 'Ranged', range: 5, rangeShape: 'diamond', multiplier: 3.5, icon: '☀️', 
-            isAoe: true, aoeRange: 2, aoeShape: 'square', mpCost: 1, category: 'Ultimate' 
+            multiplier: 0, 
+            icon: '🏃', 
+            category: 'Utility' 
         },
 
-        // [추가] 천구 궁극기: 천벌 (십자 범위 스턴 공격)
-        'heaven_wrath': { 
-            id: 'heaven_wrath', name: '천벌', type: 'Ranged', range: 4, rangeShape: 'square', multiplier: 2.5, icon: '⚡', 
-            isAoe: true, aoeRange: 1, aoeShape: 'cross', mpCost: 1, category: 'Ultimate',
-            appliesEffect: { id: 'stunned', turns: 1 } 
+        'basic_attack': { 
+            id: 'basic_attack',        // 고유 ID
+            name: '기본 공격',           // 화면에 보일 이름
+            type: 'Melee',             // 근거리 공격 (원거리로 하려면 'Ranged'로 변경)
+            range: 1,                  // 사거리 1칸
+            rangeShape: 'diamond',     // 마름모 모양 범위
+            multiplier: 0,             // ★ 핵심: 스킬 자체 추가 데미지는 0
+            icon: '👊',                // 주먹 아이콘
+            category: 'Attack'         // 공격 카테고리
         },
 
-        // [추가] 이든 궁극기: 에덴의 정원 (광역 힐 + 재생 버프)
-        'eden_garden': { 
-            id: 'eden_garden', name: '에덴의 정원', type: 'Heal', range: 0, rangeShape: 'diamond', multiplier: 2.5, icon: '🌳', 
-            targetType: 'ALLY', isAoe: true, aoeRange: 3, aoeShape: 'diamond', mpCost: 1, category: 'Ultimate',
-            appliesEffect: { id: 'regenerating', turns: 3, value: 20 }
+        'basic_attack': { 
+            id: 'basic_attack',        // 고유 ID
+            name: '할퀴기',           // 화면에 보일 이름
+            type: 'Melee',             // 근거리 공격 (원거리로 하려면 'Ranged'로 변경)
+            range: 1,                  // 사거리 1칸
+            rangeShape: 'diamond',     // 마름모 모양 범위
+            multiplier: 0,             // ★ 핵심: 스킬 자체 추가 데미지는 0
+            icon: '⚡︎',                // 주먹 아이콘
+            category: 'Attack'         // 공격 카테고리
         },
 
-        // [추가] 삼다수 궁극기: 대해일 (주변 광역 피해 + 공격력 약화)
-        'tsunami': { 
-            id: 'tsunami', name: '대해일', type: 'Melee', range: 3, rangeShape: 'square', multiplier: 3.0, icon: '🌊', 
-            isAoe: true, aoeRange: 1, aoeShape: 'square', mpCost: 1, category: 'Ultimate',
-            appliesEffect: { id: 'strengthDown', turns: 2, value: 0.5 }
-        }
-    };
+
+
+
+};
     let SKILLS = {};
     
     // 스킬 카테고리 순서 정의
@@ -1677,23 +1734,31 @@ const loginStatusModal = document.getElementById('login-status-modal');
     if (snapshot.empty) {
         const batch = writeBatch(db);
         const pcData = [ 
-                // 미장: 초신성 폭발 추가
-                { name: "미장", img: "", ultImage: "", type: 'PC', size: 1, skills: ['slash', 'shoot', 'heal', 'hp_transfer', 'super_nova'], order: 1 },
                 
-                // 천구: 천벌 추가
-                { name: "천구", img: "", ultImage: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'heaven_wrath'], order: 2 },
+                { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
+                { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
+                { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2503afd9-ce89-40d2-b3aa-9200b5135457", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 7, skills: ['basic_attack'], order: 1 },
                 
-                // 이든: 에덴의 정원 추가
-                { name: "이든", img: "", ultImage: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'eden_garden'], order: 3 },
-                
-                // 삼다수: 대해일 추가
-                { name: "삼다수", img: "", ultImage: "", type: 'PC', size: 1, skills: ['crosscut', 'resurrect', 'mp_transfer', 'tsunami'], order: 4 },
+            
+            
+            
             ];
         const enemyData = [ 
-            { name: "Enemy1", img: "", type: 'ENEMY', size: 1, skills: ['slash'], order: 2 }, 
-            { name: "Enemy2", img: "", type: 'ENEMY', size: 2, skills: ['stomp'], order: 4 }, 
-            { name: "Enemy3", img: "", type: 'ENEMY', size: 1, skills: ['stomp'], order: 1 }, 
-            { name: "Enemy4", img: "", type: 'ENEMY', size: 3, skills: ['stomp'], order: 3 }, 
+            { name: "좀비1", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['basic_attack'], order: 2 }, 
+            { name: "좀비2", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['basic_attack'], order: 2 }, 
+            { name: "좀비3", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 }, 
+            { name: "좀비4", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 }, 
+            { name: "좀비5", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비6", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비7", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비8", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비9", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비10", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비11", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비12", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비13", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비14", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
+            { name: "좀비15", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['stomp'], order: 2 },
         ];
         [...pcData, ...enemyData].forEach(char => {
             const charPassword = char.type === 'PC' ? DEFAULT_PC_PASSWORD : ''; 
@@ -1704,9 +1769,12 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 type: char.type, 
                 size: char.size, 
                 hp: 100, maxHp: 100, 
-                mp: 0, maxMp: 100, // ★ 수정됨: 0에서 시작 (최대 100)
-                minAttack: 12, maxAttack: 18, 
+                ultimateUsed: false, 
+                minAttack: 1, maxAttack: 20, 
                 minDefense: 3, maxDefense: 7, 
+                bonusDamage: char.bonusDamage || 0,
+                baseMoveRange: char.moveRange !== undefined ? char.moveRange : 1,
+                moveRange: char.moveRange !== undefined ? char.moveRange : 1,
                 x: null, y: null, 
                 skills: char.skills || [], 
                 turnOrder: char.order, 
@@ -1805,23 +1873,20 @@ const loginStatusModal = document.getElementById('login-status-modal');
                             const livingPCs = characters.filter(c => c.type === 'PC' && c.hp > 0 && c.x !== null);
                             if (livingPCs.length > 0) {
                                 const batch = writeBatch(db);
-                                let mpWasRecovered = false;
+                                // [수정] MP 회복 로직 삭제됨
                                 
                                 for (const pc of livingPCs) {
                                     const charRef = doc(db, 'games', gameId, 'characters', pc.id);
                                     let updates = {};
-                                    const newMp = Math.min(pc.maxMp, pc.mp + MP_REGEN_PER_TURN);
-                                    if (newMp > pc.mp) {
-                                        updates.mp = newMp;
-                                        mpWasRecovered = true;
-                                    }
+
+                                    // 대미지 타일 체크
                                     const tileKey = `${pc.x},${pc.y}`;
-                const tile = boardTiles[tileKey];
-                if (tile && tile.type === 'damage') {
-                    const damage = DAMAGE_TILE_DAMAGE;
-                    updates.hp = Math.max(0, (updates.hp !== undefined ? updates.hp : pc.hp) - damage);
-                    logAction(`🩸 ${pc.name}이(가) 대미지 칸에 서있어 **${damage} 피해**를 입었습니다!`, "damage");
-                }
+                                    const tile = boardTiles[tileKey];
+                                    if (tile && tile.type === 'damage') {
+                                        const damage = DAMAGE_TILE_DAMAGE;
+                                        updates.hp = Math.max(0, (updates.hp !== undefined ? updates.hp : pc.hp) - damage);
+                                        logAction(`🩸 ${pc.name}이(가) 대미지 칸에 서있어 **${damage} 피해**를 입었습니다!`, "damage");
+                                    }
                                     const effects = pc.statusEffects || [];
                                     if (effects.length > 0) {
                                         const isStunned = effects.some(effect => effect.id === 'stunned');
@@ -1853,9 +1918,6 @@ const loginStatusModal = document.getElementById('login-status-modal');
                                     }
                                 }
                                 await batch.commit();
-                                if (mpWasRecovered) {
-                                        await logAction(`💧 모든 아군이 ${MP_REGEN_PER_TURN}의 MP를 회복했습니다.`, "system");
-                                }
                             }
                         }
                         break;
@@ -1867,15 +1929,10 @@ const loginStatusModal = document.getElementById('login-status-modal');
                             const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
                             if (livingEnemies.length > 0) {
                                 const batch = writeBatch(db);
-                                let mpWasRecovered = false;
                                 for (const enemy of livingEnemies) {
                                     const charRef = doc(db, 'games', gameId, 'characters', enemy.id);
                                     let updates = {};
-                                    const newMp = Math.min(enemy.maxMp, enemy.mp + MP_REGEN_PER_TURN);
-                                    if (newMp > enemy.mp) {
-                                        updates.mp = newMp;
-                                        mpWasRecovered = true;
-                                    }
+                                    
                                     const tileKey = `${enemy.x},${enemy.y}`;
                 const tile = boardTiles[tileKey];
                 if (tile && tile.type === 'damage') {
@@ -1909,9 +1966,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
                                     }
                                 } 
                                 await batch.commit();
-                                if (mpWasRecovered) {
-                                    await logAction(`💧 모든 적군이 ${MP_REGEN_PER_TURN}의 MP를 회복했습니다.`, "system");
-                                }
+                                
                             }
                         }
                         break;
@@ -1932,6 +1987,28 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 if (currentTurnChar && currentTurnChar.isAuto) {
                     setTimeout(() => runAutoTurn(currentTurnChar), 1000);
                 }
+
+                // ▼▼▼ [추가] 패턴형 이동력 적용 (홀수턴 내림 / 짝수턴 올림) ▼▼▼
+                if (isAdmin && currentTurnChar && currentTurnChar.type === 'PC') {
+                    
+                    // 1. 원래 이동력(base) 가져오기 (없으면 현재 이동력 사용)
+                    const base = currentTurnChar.baseMoveRange || currentTurnChar.moveRange || 1;
+                    
+                    // 2. 라운드에 따라 계산
+                    // 홀수: 내림 (floor), 짝수: 올림 (ceil)
+                    // Math.max(1, ...) 로 최소 1칸은 보장
+                    let calculatedRange = (round % 2 !== 0) ? Math.floor(base / 2) : Math.ceil(base / 2);
+                    const newRange = Math.max(1, calculatedRange);
+                    
+                    // 3. 값이 다를 때만 DB 업데이트 & 로그 출력
+                    if (currentTurnChar.moveRange !== newRange) {
+                        updateDoc(doc(db, 'games', gameId, 'characters', turnCharId), { moveRange: newRange });
+                        
+                        // 로그에 출력 (예: 강나리의 이동력: 7 → 3칸)
+                        logAction(`🏃 ${currentTurnChar.name}의 이동력: ${base} → **${newRange}칸** (패턴 적용)`, "move");
+                    }
+                }
+                // ▲▲▲ [여기까지 추가] ▲▲▲
             }
             previousTurnCharId = turnCharId;
             currentTurnIndex = characters.findIndex(c => c.id === turnCharId);
@@ -1950,11 +2027,6 @@ const loginStatusModal = document.getElementById('login-status-modal');
 
     unsubscribeChars = onSnapshot(query(collection(db, "games", gameId, "characters")), (snapshot) => {
         characters = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.turnOrder - b.turnOrder);
-        characters.forEach(char => {
-            if (char.mp === undefined || char.maxMp === undefined) {
-                char.mp = char.maxMp = 50; 
-            }
-        });
         if (!pcLoginModal.classList.contains('hidden')) populatePCLoginSelect(); 
         render();
     });
@@ -2765,88 +2837,81 @@ function isAttackPossible(attacker, target, attackRange) {
 }
 
     async function applyDamage(attacker, defender, skillId) {
-    const skill = SKILLS[skillId];
-    if (!skill) return;
-    
-    if (skill.mpCost > 0) await updateMP(attacker, -skill.mpCost);
+        const skill = SKILLS[skillId];
+        if (!skill) return;
 
-    const defenderToken = document.querySelector(`.character-token[data-char-id="${defender.id}"]`);
-    if (defenderToken) {
-        defenderToken.classList.add('hit-animation', 'show-hit-overlay');
-        setTimeout(() => {
-            defenderToken.classList.remove('hit-animation', 'show-hit-overlay');
-        }, 1000);
+        // ... (타격 효과 애니메이션 부분은 그대로 둠) ...
+        const defenderToken = document.querySelector(`.character-token[data-char-id="${defender.id}"]`);
+        if (defenderToken) {
+            defenderToken.classList.add('hit-animation', 'show-hit-overlay');
+            setTimeout(() => {
+                defenderToken.classList.remove('hit-animation', 'show-hit-overlay');
+            }, 1000);
+        }
+
+        // 1. 기본 공격력 계산 (주사위 굴리기)
+        let baseAttack = Math.floor(Math.random() * (attacker.maxAttack - attacker.minAttack + 1)) + attacker.minAttack;
+        let attackBonus = 0;
+
+        // ... (상태 이상 버프/디버프 계산 부분은 그대로 둠) ...
+        if (attacker.statusEffects && attacker.statusEffects.length > 0) {
+            // ... (strengthUp, strengthDown 로직 생략) ...
+        }
+        let finalAttack = baseAttack + attackBonus;
+
+        // [삭제됨] 방어력 계산 부분은 이제 필요 없으므로 주석 처리하거나 지워도 됩니다.
+        // let baseDefense = ... 
+        // let defenseBonus = ...
+        // let finalDefense = ...
+
+        // ▼▼▼ [여기서부터 수정된 코드입니다!] ▼▼▼
+        
+        // 캐릭터 고유 추가 데미지 (bonusDamage) 가져오기 (없으면 0)
+        const charBonus = attacker.bonusDamage || 0; 
+        
+        // 최종 데미지 = (랜덤 공격력) + (캐릭터 고유 추가뎀) + (스킬 추가뎀)
+        // 방어력(- finalDefense)은 제거되었습니다.
+        const finalDamage = Math.max(1, Math.round(finalAttack + charBonus));
+
+        // ▲▲▲ [여기까지가 수정된 코드입니다!] ▲▲▲
+
+        const newHp = await updateHP(defender, -finalDamage, "damage");
+            await triggerCombatText(defender, `-${finalDamage.toFixed(0)}`, 'damage');
+
+        // 로그 메시지 만들기
+        let bonusText = "";
+        if (attackBonus > 0) bonusText += `+버프 ${attackBonus.toFixed(0)}`;
+        
+        
+        let message = `💥 ${attacker.name}의 ${skill.name}! ${defender.name}에게 **${finalDamage.toFixed(0)} 피해!** ${bonusText ? `(${bonusText})` : ''}`;
+        if (newHp === 0) message += `<br>💀 ${defender.name}이(가) 쓰러졌습니다!`;
+        await logAction(message, "damage");
+        
+        return true;
     }
-
-    let baseAttack = Math.floor(Math.random() * (attacker.maxAttack - attacker.minAttack + 1)) + attacker.minAttack;
-    let attackBonus = 0;
-
-    if (attacker.statusEffects && attacker.statusEffects.length > 0) {
-        const strengthUpEffect = attacker.statusEffects.find(e => e.id === 'strengthUp');
-        if (strengthUpEffect) {
-            let bonus = baseAttack * (strengthUpEffect.value - 1);
-            attackBonus += bonus;
-            logAction(`⚔️ ${attacker.name}의 [${strengthUpEffect.name}] 효과! 공격력이 ${bonus.toFixed(0)} 증가합니다.`, "system");
-        }
-        const strengthDownEffect = attacker.statusEffects.find(e => e.id === 'strengthDown');
-        if (strengthDownEffect) {
-            let penalty = baseAttack * (1 - strengthDownEffect.value);
-            attackBonus -= penalty;
-            logAction(`⚔️ ${attacker.name}의 [${strengthDownEffect.name}] 효과! 공격력이 ${penalty.toFixed(0)} 감소합니다.`, "system");
-        }
-    }
-    let finalAttack = baseAttack + attackBonus;
-
-    let baseDefense = Math.floor(Math.random() * (defender.maxDefense - defender.minDefense + 1)) + defender.minDefense;
-    let defenseBonus = 0;
-
-    if (defender.statusEffects && defender.statusEffects.length > 0) {
-        const defenseUpEffect = defender.statusEffects.find(e => e.id === 'defenseUp');
-        if (defenseUpEffect) {
-            let bonus = baseDefense * (defenseUpEffect.value - 1);
-            defenseBonus += bonus;
-            logAction(`🛡️ ${defender.name}의 [${defenseUpEffect.name}] 효과! 방어력이 ${bonus.toFixed(0)} 증가합니다.`, "system");
-        }
-        const defenseDownEffect = defender.statusEffects.find(e => e.id === 'defenseDown');
-        if (defenseDownEffect) {
-            let penalty = baseDefense * (1 - defenseDownEffect.value);
-            defenseBonus -= penalty;
-            logAction(`🛡️ ${defender.name}의 [${defenseDownEffect.name}] 효과! 방어력이 ${penalty.toFixed(0)} 감소합니다.`, "system");
-        }
-    }
-    let finalDefense = baseDefense + defenseBonus;
-
-    const finalDamage = Math.max(1, Math.round((finalAttack * skill.multiplier) - finalDefense));
-    const newHp = await updateHP(defender, -finalDamage, "damage");
-        await triggerCombatText(defender, `-${finalDamage.toFixed(0)}`, 'damage');
-
-    let bonusText = "";
-    if (attackBonus > 0) bonusText += `+공격 ${attackBonus.toFixed(0)}`;
-    if (defenseBonus > 0) bonusText += (bonusText ? ", " : "") + `-방어 ${defenseBonus.toFixed(0)}`;
-    
-    let message = `💥 ${attacker.name}의 ${skill.name}! ${defender.name}에게 **${finalDamage.toFixed(0)} 피해!** ${bonusText ? `(${bonusText})` : ''}`;
-    if (newHp === 0) message += `<br>💀 ${defender.name}이(가) 쓰러졌습니다!`;
-    await logAction(message, "damage");
-    
-    return true;
-}
     
     async function applyHealOrSupport(caster, target, skillId) {
     const skill = SKILLS[skillId];
     if (!skill) return false;
+
+    // [수정] 궁극기 사용 여부 체크
+    if (skill.category === 'Ultimate' && caster.ultimateUsed) {
+        await logAction(`⚠️ ${caster.name}은(는) 이미 궁극기를 사용했습니다!`, "system");
+        return false;
+    } else if (skill.category === 'Ultimate') {
+        // 궁극기 사용 처리
+        await updateDoc(doc(db, 'games', gameId, 'characters', caster.id), { ultimateUsed: true });
+    }
     
     const isResurrect = skill.targetType === 'ALLY_DEAD';
     const isHpTransfer = skillId === 'hp_transfer';
-    const isMpTransfer = skillId === 'mp_transfer';
     
-    if (caster.mp < skill.mpCost || (isHpTransfer && caster.hp <= skill.hpCost)) {
-         const resource = isHpTransfer ? 'HP' : 'MP';
-         const cost = isHpTransfer ? skill.hpCost : skill.mpCost;
-         const current = isHpTransfer ? caster.hp : caster.mp;
-         await logAction(`⚠️ ${caster.name}이(가) ${resource}가 부족하여 ${skill.name}을(를) 시전하지 못했습니다. (필요: ${cost} ${resource}, 현재: ${current} ${resource})`, "system");
+    // [수정] MP 체크 삭제, HP 코스트만 체크
+    if (isHpTransfer && caster.hp <= skill.hpCost) {
+         await logAction(`⚠️ ${caster.name}이(가) HP가 부족하여 ${skill.name}을(를) 시전하지 못했습니다.`, "system");
          return false;
     }
-    
+
     if (!isResurrect && target.hp <= 0) {
         await logAction(`⚠️ ${caster.name}은(는) 사망한 ${target.name}에게 ${skill.name}을(를) 사용할 수 없습니다.`, "system");
         return false;
@@ -2857,24 +2922,23 @@ function isAttackPossible(attacker, target, attackRange) {
         return false;
     }
 
-    if (skill.mpCost > 0) await updateMP(caster, -skill.mpCost);
     if (skill.hpCost > 0) await updateHP(caster, -skill.hpCost, "damage");
 
     const targetToken = document.querySelector(`.character-token[data-char-id="${target.id}"]`);
-    if (targetToken) {
-        const animationClass = isMpTransfer ? 'heal-animation' : 'heal-animation'; 
-        const overlayClass = 'show-heal-overlay';
-        targetToken.classList.add(animationClass, overlayClass);
-        setTimeout(() => {
-            targetToken.classList.remove(animationClass, overlayClass);
-        }, 1000);
-    }
+if (targetToken) {
+    const animationClass = 'heal-animation'; // 👈 단순하게 변경
+    const overlayClass = 'show-heal-overlay';
+    targetToken.classList.add(animationClass, overlayClass);
+    setTimeout(() => {
+        targetToken.classList.remove(animationClass, overlayClass);
+    }, 1000);
+}
 
     let message;
     
     if (isResurrect) {
         const reviveHp = Math.round(target.maxHp * skill.multiplier);
-        await updateDoc(doc(db, 'games', gameId, 'characters', target.id), { hp: reviveHp, mp: 0 });
+        await updateDoc(doc(db, 'games', gameId, 'characters', target.id), { hp: reviveHp});
         message = `👼 ${caster.name}의 ${skill.name}! **${target.name}**을(를) **${reviveHp} HP, 0 MP**로 부활시켰습니다.`;
         
         await triggerCombatText(target, `+${reviveHp}`, 'heal');
@@ -2889,11 +2953,6 @@ function isAttackPossible(attacker, target, attackRange) {
         await triggerCombatText(caster, `-${skill.hpCost}`, 'damage');
 
         await logAction(message, "heal");
-    } else if (isMpTransfer) {
-        const mpAmount = skill.multiplier;
-        const newMp = await updateMP(target, mpAmount);
-        message = `💧 ${caster.name}이(가) **${skill.mpCost} MP**를 소모하여 ${target.name}에게 **${mpAmount} MP**를 전달했습니다. (${target.mp} → ${newMp})`;
-        await logAction(message, "system");
     } else if (skill.type === 'Heal') {
         const baseHeal = Math.floor(Math.random() * (caster.maxAttack - caster.minAttack + 1)) + caster.minAttack;
         const finalHeal = Math.max(1, Math.round(baseHeal * skill.multiplier));
@@ -2974,121 +3033,270 @@ async function applyStatusEffect(target, effectInfo) {
     showCustomModal(title, resultMessage, buttons);
 }
         async function checkGameEndCondition() {
-    if (!isAdmin) return false;
+        if (!isAdmin) return false;
 
-    const remainingPCs = characters.filter(c => c.type === 'PC' && c.hp > 0 && c.x !== null).length;
-    const remainingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null).length;
-
-    let gameResult = null;
-
-    if (remainingPCs === 0) {
-        gameResult = { title: "패배...", message: "모든 아군이 쓰러졌습니다." };
-    } else if (remainingEnemies === 0) {
-        gameResult = { title: "승리!", message: "모든 적을 물리쳤습니다." };
-    }
-
-    if (gameResult) {
-        await setDoc(doc(db, 'games', gameId), { 
-            gameState: 'ENDED',
-            gameResult: gameResult // 모든 유저가 이 정보를 보고 팝업을 띄우게 됩니다.
-        }, { merge: true });
-        return true; // 게임 종료됨
-    }
-
-    return false; // 게임 계속됨
-}
-    async function executeSkill(attacker, target, skillId) {
-    const skill = SKILLS[skillId];
-    if (!skill || !target) return;
-
-    // [1] 궁극기 연출 (DB에 신호 보내기)
-    if (skill.category === 'Ultimate') {
-        await setDoc(doc(db, 'games', gameId), { 
-            ultimateEvent: {
-                attackerId: attacker.id,
-                skillId: skillId,
-                timestamp: serverTimestamp()
-            }
-        }, { merge: true });
+        const remainingPCs = characters.filter(c => c.type === 'PC' && c.hp > 0 && c.x !== null).length;
+        const remainingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null).length;
         
-        await delay(6500); // 연출 시간 대기
-    } 
-    // ⚠️ 주의: 여기서 함수를 닫는 } 괄호가 있어서 에러가 났었습니다. 제거했습니다.
+        // [추가] 파괴 가능한 벽(destructible)도 남은 적 수에 포함
+        const remainingWalls = Object.values(boardTiles).filter(t => t.type === 'destructible').length;
 
-    let actionSucceeded = false;
-    let affectedTargets = [];
+        let gameResult = null;
 
-    // [2] 스킬 효과 적용 (공격/궁극기)
-    if (skill.category === 'Attack' || skill.category === 'Ultimate') {
-        if (target.type === attacker.type) {
-            await logAction(`⚠️ ${attacker.name}은(는) 아군에게 공격할 수 없습니다.`, "system");
-            return;
+        if (remainingPCs === 0) {
+            gameResult = { title: "패배...", message: "모든 아군이 쓰러졌습니다." };
+        } else if (remainingEnemies === 0 && remainingWalls === 0) {
+            // [수정] 적군도 0명이고, 벽도 0개여야 승리
+            gameResult = { title: "승리!", message: "모든 적과 장애물을 파괴했습니다!" };
         }
 
-        if (skill.isAoe) {
-            // 광역 공격
-            const targetsInAoe = findTargetsInAoe(target.x, target.y, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
-            for (const aoeTarget of targetsInAoe) {
-                const success = await applyDamage(attacker, aoeTarget, skillId);
+        if (gameResult) {
+            await setDoc(doc(db, 'games', gameId), { 
+                gameState: 'ENDED',
+                gameResult: gameResult 
+            }, { merge: true });
+            return true; 
+        }
+
+        return false; 
+    }
+
+// [추가] 벽 파괴 이펙트 (파편 + 흔들림)
+// [수정됨] 벽 파괴 이펙트 (강화판: 더 많이, 더 멀리!)
+function triggerWallDestructionEffect(x, y) {
+    // 1. 보드 흔들림 효과 (강도 증가)
+    const board = document.getElementById('game-board');
+    board.classList.remove('shake-active');
+    void board.offsetWidth;
+    board.classList.add('shake-active');
+    setTimeout(() => board.classList.remove('shake-active'), 500);
+
+    // 2. 파편 폭발 효과
+    const cell = document.querySelector(`.cell[data-x='${x}'][data-y='${y}']`);
+    if (!cell) return;
+
+    const rect = cell.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+
+    // ★ 파편 개수 3배 증가 (12 -> 36)
+    for (let i = 0; i < 36; i++) {
+        const debris = document.createElement('div');
+        debris.classList.add('wall-debris');
+        document.body.appendChild(debris);
+
+        // 크기 랜덤 설정 (4px ~ 12px)
+        const size = 4 + Math.random() * 8;
+        debris.style.width = `${size}px`;
+        debris.style.height = `${size}px`;
+
+        // 시작 위치 (중심에서 약간 랜덤)
+        const startX = centerX + (Math.random() - 0.5) * 40;
+        const startY = centerY + (Math.random() - 0.5) * 40;
+        
+        debris.style.left = `${startX}px`;
+        debris.style.top = `${startY}px`;
+
+        // 날아갈 방향 및 거리 (속도 대폭 증가)
+        const angle = Math.random() * Math.PI * 2; 
+        const velocity = 60 + Math.random() * 100; // 힘차게 뻗어나감
+        const moveX = Math.cos(angle) * velocity;
+        const moveY = Math.sin(angle) * velocity;
+        const rotate = Math.random() * 720; // 회전도 더 빠르게
+
+        // 애니메이션 실행
+        const animation = debris.animate([
+            { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+            { transform: `translate(${moveX}px, ${moveY + 100}px) rotate(${rotate}deg)`, opacity: 0 } // 중력 효과 강화
+        ], {
+            duration: 800 + Math.random() * 400, // 0.8~1.2초 동안 지속
+            easing: 'cubic-bezier(0.25, 1, 0.5, 1)' 
+        });
+
+        animation.onfinish = () => debris.remove();
+    }
+}
+
+    async function executeSkill(attacker, target, skillId) {
+        const skill = SKILLS[skillId];
+        // target은 캐릭터 객체일 수도 있고, {x, y} 좌표 객체일 수도 있습니다.
+        if (!skill || !target) return;
+
+        // [1] 궁극기 연출 (기존 코드 유지)
+        // [수정] 궁극기 사용 제한 체크
+        if (skill.category === 'Ultimate') {
+            if (attacker.ultimateUsed) {
+                await logAction(`⚠️ ${attacker.name}은(는) 이미 궁극기를 사용했습니다! (게임당 1회 제한)`, "system");
+                return;
+            }
+
+            // 궁극기 연출 실행
+            await setDoc(doc(db, 'games', gameId), { 
+                ultimateEvent: {
+                    attackerId: attacker.id,
+                    skillId: skillId,
+                    timestamp: serverTimestamp()
+                }
+            }, { merge: true });
+            
+            // ★ 궁극기 사용 처리 (DB 업데이트)
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { ultimateUsed: true });
+            
+            await delay(6500); 
+        }
+
+        let actionSucceeded = false;
+        let affectedTargets = [];
+        let tilesChanged = false; // 타일 변경 여부 체크용
+
+        // 공격 및 궁극기 로직
+        if (skill.category === 'Attack' || skill.category === 'Ultimate') {
+            
+            // ★ [추가] 타일 타격 로직 (내부 함수)
+            const hitTile = async (tx, ty, damage) => {
+                const tileKey = `${tx},${ty}`;
+                const tile = boardTiles[tileKey];
+                
+                // 타일이 존재하고, '파괴 가능(destructible)' 타입인 경우
+                if (tile && tile.type === 'destructible') {
+                    const newHp = Math.max(0, tile.hp - damage);
+                    
+                    if (newHp === 0) {
+                        // ★ [여기!] 파괴 이펙트 호출
+                        triggerWallDestructionEffect(tx, ty);
+                        // HP 0 -> 파괴됨 -> 목록에서 삭제 (일반 칸으로 변함)
+                        delete boardTiles[tileKey];
+                        await logAction(`🧱 (${tx}, ${ty}) 위치의 벽이 완전히 파괴되었습니다!`, "damage");
+                    } else {
+                        // HP 감소 -> 업데이트
+                        tile.hp = newHp;
+                        boardTiles[tileKey] = tile; 
+                        await logAction(`🧱 벽에 ${damage} 피해! (남은 HP: ${newHp})`, "damage");
+                    }
+                    tilesChanged = true; // 변경 사항 있음 표시
+                    return true; // 타격 성공
+                }
+                return false; // 타격 실패 (벽이 없음)
+            };
+
+            // 기본 공격력 계산 (타일 타격용)
+            let baseAttack = Math.floor(Math.random() * (attacker.maxAttack - attacker.minAttack + 1)) + attacker.minAttack;
+            // 타일에는 방어력 없이 순수 대미지를 줍니다 (필요시 조정 가능)
+            const tileDamage = Math.max(1, Math.round(baseAttack * skill.multiplier));
+
+
+            if (skill.isAoe) {
+                // === 광역 공격 ===
+                
+                // 1. 캐릭터 타격 (기존 로직)
+                const targetsInAoe = findTargetsInAoe(target.x, target.y, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
+                for (const aoeTarget of targetsInAoe) {
+                    const success = await applyDamage(attacker, aoeTarget, skillId);
+                    if (success) {
+                        actionSucceeded = true;
+                        affectedTargets.push(aoeTarget);
+                    }
+                }
+                
+                // 2. ★ [추가] 범위 내 타일 타격
+                const range = skill.aoeRange;
+                const shape = skill.aoeShape || 'square';
+                const cx = target.x; // 타겟(중심) 좌표
+                const cy = target.y;
+
+                for (let dy = -range; dy <= range; dy++) {
+                    for (let dx = -range; dx <= range; dx++) {
+                        let inShape = (shape === 'diamond' && Math.abs(dx) + Math.abs(dy) <= range) || 
+                                      (shape === 'square') || 
+                                      (shape === 'cross' && (dx === 0 || dy === 0));
+                        
+                        if (inShape) {
+                            const tx = cx + dx;
+                            const ty = cy + dy;
+                            // 해당 좌표에 있는 벽 타격 시도
+                            const tileHit = await hitTile(tx, ty, tileDamage);
+                            if (tileHit) actionSucceeded = true;
+                        }
+                    }
+                }
+
+            } else {
+                // === 단일 공격 ===
+                
+                if (target.id) {
+                    // 1. 캐릭터를 직접 타겟팅한 경우
+                    if (target.type === attacker.type) {
+                        await logAction(`⚠️ ${attacker.name}은(는) 아군에게 공격할 수 없습니다.`, "system");
+                        return;
+                    }
+                    const success = await applyDamage(attacker, target, skillId);
+                    if (success) {
+                        actionSucceeded = true;
+                        affectedTargets.push(target);
+                    }
+                } else {
+                    // 2. ★ [추가] 빈 땅(좌표)을 클릭한 경우 -> 그 자리에 벽이 있는지 확인
+                    const tileHit = await hitTile(target.x, target.y, tileDamage);
+                    if (tileHit) {
+                        actionSucceeded = true;
+                    } else {
+                        // 벽도 없고 캐릭터도 없으면 미스
+                        // await logAction(`허공을 공격했습니다.`, "system"); 
+                    }
+                }
+            }
+
+            // ★ [추가] 타일 정보가 변경되었으면 DB에 저장
+            if (tilesChanged) {
+                await setDoc(doc(db, 'games', gameId, 'board', 'tiles'), { tiles: boardTiles });
+            }
+
+        } else if (skill.category === 'Heal' || skill.category === 'Support') {
+            // (힐/서포트 로직은 기존 유지)
+             if (target.type && target.type !== attacker.type) {
+                await logAction(`⚠️ ${attacker.name}은(는) 적군에게 ${skill.name}을(를) 사용할 수 없습니다.`, "system");
+                return;
+            }
+            if(target.id) {
+                const success = await applyHealOrSupport(attacker, target, skillId);
                 if (success) {
                     actionSucceeded = true;
-                    affectedTargets.push(aoeTarget);
+                    affectedTargets.push(target);
                 }
             }
         } else {
-            // 단일 공격
-            const success = await applyDamage(attacker, target, skillId);
-            if (success) {
-                actionSucceeded = true;
-                affectedTargets.push(target);
+            actionSucceeded = true; 
+        }
+        
+        // [4] 상태 이상 효과 적용 (기존 유지)
+        if (skill.appliesEffect && affectedTargets.length > 0) {
+            for (const finalTarget of affectedTargets) {
+                await applyStatusEffect(finalTarget, skill.appliesEffect);
             }
         }
-    } 
-    // [3] 스킬 효과 적용 (힐/서포트)
-    else if (skill.category === 'Heal' || skill.category === 'Support') {
-        if (target.type !== attacker.type) {
-            await logAction(`⚠️ ${attacker.name}은(는) 적군에게 ${skill.name}을(를) 사용할 수 없습니다.`, "system");
-            return;
-        }
-        const success = await applyHealOrSupport(attacker, target, skillId);
-        if (success) {
-            actionSucceeded = true;
-            affectedTargets.push(target);
-        }
-    } else {
-        actionSucceeded = true; 
-    }
-    
-    // [4] 상태 이상 효과 적용
-    if (skill.appliesEffect && affectedTargets.length > 0) {
-        for (const finalTarget of affectedTargets) {
-            await applyStatusEffect(finalTarget, skill.appliesEffect);
-        }
-    }
-    
-    // [5] 행동 종료 처리
-    if (actionSucceeded) {
-        const isGameOver = await checkGameEndCondition();
-        if (isGameOver) return;
+        
+        // [5] 행동 종료 처리 (기존 유지)
+        if (actionSucceeded) {
+            const isGameOver = await checkGameEndCondition();
+            if (isGameOver) return;
 
-        if (attacker.type === 'PC' && roundPhase === 'PLAYER_PHASE') {
-            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { hasActedThisRound: true });
-            selectedCharacterId = null;
-            selectedSkill = null;
-            render();
-        }
+            if (attacker.type === 'PC' && roundPhase === 'PLAYER_PHASE') {
+                await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { hasActedThisRound: true });
+                selectedCharacterId = null;
+                selectedSkill = null;
+                render();
+            }
 
-        if (attacker.type === 'ENEMY' && roundPhase === 'ENEMY_EXECUTION') {
-            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { nextAction: null });
-            selectedCharacterId = null;
-            selectedSkill = null;
-            render();
+            if (attacker.type === 'ENEMY' && roundPhase === 'ENEMY_EXECUTION') {
+                await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { nextAction: null });
+                selectedCharacterId = null;
+                selectedSkill = null;
+                render();
+            }
+        } else {
+            render(); 
         }
-    } else {
-        render(); 
     }
-} 
-// ▲ 이 닫는 괄호가 누락되어 있어서 'undoMove' 함수와 코드가 섞였을 수 있습니다. 꼭 확인하세요!
 
     async function undoMove() {
     const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
@@ -3312,6 +3520,7 @@ const isHealOrSupport = (skill.category === 'Heal' || skill.category === 'Suppor
         if (characters.length === 0) return;
         
         const renderCard = (char) => {
+            // ... (기존 renderCard 내부 로직은 그대로 두세요) ...
             const isSelected = char.id === selectedCharacterId, isPlaced = char.x !== null, isDead = char.hp <= 0, isEnemy = char.type === 'ENEMY';
             const canBeDragged = (!isEnemy && (gameState === 'PREPARATION' && !isDead)) || (!isPlaced && !isDead) || (isAdmin && isAdminMoveAllowed);
             
@@ -3336,35 +3545,39 @@ const isHealOrSupport = (skill.category === 'Heal' || skill.category === 'Suppor
             infoContainer.querySelector('button').onclick = (e) => { e.stopPropagation(); openProfileModal(char); };
             charCard.appendChild(infoContainer);
             charCard.onclick = () => {
-    const isMyTurn = (loggedInCharId === char.id && characters[currentTurnIndex]?.id === char.id);
-    const canSelect = (isMyTurn && gameState === 'STARTED');
+                const isMyTurn = (loggedInCharId === char.id && characters[currentTurnIndex]?.id === char.id);
+                const canSelect = (isMyTurn && gameState === 'STARTED');
 
-    if (isPlaced && !isDead) {
+                if (isPlaced && !isDead) {
                     if (isAdmin) {
                         // previewCharacterId = char.id;      
                         // selectedCharacterId = null;          
                     } else if (canSelect) {
-            selectedCharacterId = char.id;
-            turnPhase = 'MOVE';
-            selectedSkill = 'move';
-            preMovePosition = { x: char.x, y: char.y };
-        }
-        render();
-    }
-};
+                        selectedCharacterId = char.id;
+                        turnPhase = 'MOVE';
+                        selectedSkill = 'move';
+                        preMovePosition = { x: char.x, y: char.y };
+                    }
+                    render();
+                }
+            };
             if (canBeDragged) charCard.ondragstart = (e) => e.dataTransfer.setData('text/plain', char.id);
             return charCard;
         };
 
+        // 1. PC(아군) 목록은 항상 표시
         const pcContainer = document.createElement('div');
         pcContainer.className = 'flex gap-4';
         characters.filter(c => c.type === 'PC').forEach(char => pcContainer.appendChild(renderCard(char)));
         selectionList.appendChild(pcContainer);
 
-        const enemyContainer = document.createElement('div');
-        enemyContainer.className = 'flex gap-4 pl-4 border-l-2 border-red-800/50';
-        characters.filter(c => c.type === 'ENEMY').forEach(char => enemyContainer.appendChild(renderCard(char)));
-        selectionList.appendChild(enemyContainer);
+        // ★ [수정됨] 2. ENEMY(적군) 목록은 관리자일 때만 표시
+        if (isAdmin) {
+            const enemyContainer = document.createElement('div');
+            enemyContainer.className = 'flex gap-4 pl-4 border-l-2 border-red-800/50';
+            characters.filter(c => c.type === 'ENEMY').forEach(char => enemyContainer.appendChild(renderCard(char)));
+            selectionList.appendChild(enemyContainer);
+        }
     }
 
 function renderSkillButtons(selectedChar) {
@@ -3449,7 +3662,7 @@ function renderSkillButtons(selectedChar) {
             const isManuallyControllingEnemy = selectedChar && selectedChar.type === 'ENEMY';
             if (isManuallyControllingEnemy) {
                 let html = `<h3 class="text-lg font-bold mb-2 text-red-500">[수동 조작] ${selectedChar.name} 행동</h3>`;
-                html += `<p class="text-sm font-semibold text-blue-400 mb-3">MP: ${selectedChar.mp}/${selectedChar.maxMp}</p>`;
+                html += ``;
                 
                 if (selectedCharActionPhase === 'MOVE') {
                     html += `<p class="text-sm text-gray-400">이동할 위치를 선택하세요.</p>`;
@@ -3458,11 +3671,11 @@ function renderSkillButtons(selectedChar) {
                     selectedChar.skills.forEach(id => {
                         const skill = SKILLS[id];
                         if (skill && skill.id !== 'move') {
-                            const canUse = selectedChar.mp >= skill.mpCost;
+                            const canUse = true;
                             const disabledClass = canUse ? '' : 'opacity-50 cursor-not-allowed';
                             html += `<button data-skill-id="${id}" class="skill-btn ${selectedSkill === id ? 'ring-2 ring-red-400' : ''} text-white p-2 flex items-center flex-col text-xs font-semibold ${disabledClass}" ${canUse ? '' : 'disabled'}>
                                 ${skill.icon} ${skill.name}
-                                <span class="text-gray-400 text-xs">${skill.mpCost > 0 ? `[MP ${skill.mpCost}]` : ''}</span>
+                                <span class="text-gray-400 text-xs">${skill.mpCost > 0 ? `` : ''}</span>
                                 </button>`;
                         }
                     });
@@ -3517,7 +3730,7 @@ function renderSkillButtons(selectedChar) {
     if (isPreviewing) {
         let html = `<h3 class="text-lg font-bold mb-2 text-cyan-400">👀 ${selectedChar.name} 미리보기</h3>`;
         html += `<p class="text-sm text-gray-400 mb-3">이동 및 스킬 범위를 확인하고 있습니다.</p>`;
-        html += `<p class="text-sm font-semibold text-blue-400 mb-3">MP: ${selectedChar.mp}/${selectedChar.maxMp}</p>`;
+        html += ``;
         html += `<div class="flex flex-wrap gap-2">`;
         const moveSkill = SKILLS['move'];
         if(moveSkill) {
@@ -3564,27 +3777,48 @@ function renderSkillButtons(selectedChar) {
              html = `<h3 class="text-lg font-bold mb-2 text-green-400">${selectedChar.name} 행동</h3>`;
         }
         
-        html += `<p class="text-sm font-semibold text-blue-400 mb-3">MP: ${selectedChar.mp}/${selectedChar.maxMp}</p>`;
+        html += ``;
         
         if (selectedCharActionPhase === 'MOVE') {
             html += `<p class="text-sm text-gray-400">이동할 위치를 선택하세요.</p>`;
-        } else { 
+            } else { 
             html += `<div class="flex flex-wrap gap-2">`;
             selectedChar.skills.forEach(id => {
                 const skill = SKILLS[id];
                 if (skill && skill.id !== 'move') {
                     const isHealSupport = skill.category === 'Heal' || skill.category === 'Support';
                     const ringColor = isHealSupport ? 'ring-green-400' : 'ring-red-400';
-                    const canUse = selectedChar.mp >= skill.mpCost && (skill.hpCost === undefined || selectedChar.hp > skill.hpCost);
+                    
+                    // [수정] 사용 가능 여부 체크 (궁극기 여부 & HP 코스트)
+                    let canUse = true;
+                    let disabledReason = "";
+                    
+                    // 1. HP 코스트 부족 체크
+                    if (skill.hpCost > 0 && selectedChar.hp <= skill.hpCost) {
+                        canUse = false;
+                        disabledReason = "(HP 부족)";
+                    }
+                    // 2. 궁극기 이미 사용했는지 체크
+                    if (skill.category === 'Ultimate' && selectedChar.ultimateUsed) {
+                        canUse = false;
+                        disabledReason = "(사용됨)";
+                    }
+
                     const disabledClass = canUse ? '' : 'opacity-50 cursor-not-allowed';
-                    let costText = [skill.mpCost > 0 ? `MP ${skill.mpCost}` : '', skill.hpCost > 0 ? `HP ${skill.hpCost}` : ''].filter(Boolean).join(' ');
+                    
+                    // [수정] 버튼에 표시할 텍스트 (MP 제거됨)
+                    let costText = skill.hpCost > 0 ? `HP ${skill.hpCost} ` : '';
+                    if (disabledReason) costText += disabledReason;
+
                     html += `<button data-skill-id="${id}" data-category="${skill.category}" class="skill-btn ${selectedSkill === id ? `ring-2 ${ringColor}` : ''} text-white p-2 flex items-center flex-col text-xs font-semibold ${disabledClass}" ${canUse ? '' : 'disabled'}>
                         ${skill.icon} ${skill.name}
-                        <span class="text-gray-400 text-xs">${costText ? `[${costText}]` : ''}</span>
+                        <span class="text-gray-400 text-xs">${costText}</span>
                         </button>`;
                 }
             });
             html += `</div>`;
+            
+            // 이동 취소 버튼 (속박 상태가 아닐 때만 표시)
             if (!selectedChar.statusEffects?.some(e => e.id === 'rooted')) {
                 html += `<button id="undo-move-btn" class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white p-2">↩ 이동 취소</button>`;
             }
@@ -3610,7 +3844,7 @@ function renderSkillButtons(selectedChar) {
         if (isPreviewingOtherChar) {
             let html = `<h3 class="text-lg font-bold mb-2 text-cyan-400">👀 ${selectedChar.name} 미리보기</h3>`;
             html += `<p class="text-sm text-gray-400 mb-3">드래그앤드롭으로 이동하거나, 스킬 범위를 확인하세요.</p>`;
-            html += `<p class="text-sm font-semibold text-blue-400 mb-3">MP: ${selectedChar.mp}/${selectedChar.maxMp}</p>`;
+            html += ``;
             html += `<div class="flex flex-wrap gap-2">`;
             const moveSkill = SKILLS['move'];
             if(moveSkill) {
@@ -3666,8 +3900,8 @@ function renderSkillButtons(selectedChar) {
             return a.type === 'PC' ? -1 : 1; 
         }
         // 2. 같은 타입끼리는 이름순(가나다) 정렬
-        return a.name.localeCompare(b.name, 'ko');
-    });
+        return a.name.localeCompare(b.name, 'ko', { numeric: true });
+        });
 
     // 배치된 캐릭터만 필터링하여 표시
     characters
@@ -3887,15 +4121,32 @@ function renderLoginStatus() {
     }).join('');
 }
    function render() {
-    if (!isBoardInitialized) initializeBoard();
+        if (!isBoardInitialized) initializeBoard();
 
-    document.querySelectorAll('.cell').forEach(cell => {
-        cell.innerHTML = '';
-        cell.classList.remove('tile-obstacle', 'tile-damage', 'combat-range', 'attack-range-move', 'attack-range-skill', 'heal-range-skill', 'threat-range-foreshadow');
-        const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
-        const tile = boardTiles[`${x},${y}`];
-        if (tile) cell.classList.add(`tile-${tile.type}`);
-    });
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.innerHTML = '';
+            // [수정] tile-destructible 클래스 제거 목록에 추가
+            cell.classList.remove('tile-obstacle', 'tile-damage', 'tile-destructible', 'combat-range', 'attack-range-move', 'attack-range-skill', 'heal-range-skill', 'threat-range-foreshadow');
+            
+            const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
+            const tile = boardTiles[`${x},${y}`];
+            
+            if (tile) {
+                cell.classList.add(`tile-${tile.type}`);
+                
+                // [추가] 파괴 가능 벽일 경우 HP 바 렌더링
+                if (tile.type === 'destructible' && tile.hp !== undefined) {
+                    const hpPercent = (tile.hp / tile.maxHp) * 100;
+                    const barHtml = `
+                        <div class="tile-hp-bar">
+                            <div class="tile-hp-fill" style="width: ${hpPercent}%;"></div>
+                        </div>
+                    `;
+                    cell.innerHTML = barHtml;
+                }
+            }
+        });
+        
 
     gameBoard.style.backgroundImage = boardBackgroundImage ? `url('${boardBackgroundImage}')` : 'none';
 
@@ -3965,10 +4216,9 @@ function renderLoginStatus() {
                 token.appendChild(placeholder);
             }
             const hpPercent = (char.hp / char.maxHp) * 100;
-            const mpPercent = (char.mp / char.maxMp) * 100;
             const barContainer = document.createElement('div');
             barContainer.className = 'hp-mp-bar-container';
-            barContainer.innerHTML = `<div class="hp-bar"><div class="hp-fill" style="width: ${hpPercent}%;"></div></div><div class="mp-bar"><div class="mp-fill" style="width: ${mpPercent}%;"></div></div>`;
+            barContainer.innerHTML = `<div class="hp-bar"><div class="hp-fill" style="width: ${hpPercent}%;"></div></div>`;
             token.appendChild(barContainer);
 
             if (char.nextAction && char.hp > 0) {
@@ -4100,9 +4350,9 @@ function renderLoginStatus() {
                         ${character.type === 'PC' ? `<div><label class="text-gray-400">PC 비밀번호</label><input id="edit-password" type="text" class="form-input mt-1" value="${character.password || DEFAULT_PC_PASSWORD}"></div>` : ''}
                         <div class="grid grid-cols-3 gap-4">
                             <div><label class="text-gray-400">HP</label><input id="edit-hp" type="number" class="form-input mt-1" value="${character.hp}"></div><div><label class="text-gray-400">최대 HP</label><input id="edit-max-hp" type="number" class="form-input mt-1" value="${character.maxHp}"></div>
-                            <div><label class="text-gray-400">MP</label><input id="edit-mp" type="number" class="form-input mt-1" value="${character.mp}"></div><div><label class="text-gray-400">최대 MP</label><input id="edit-max-mp" type="number" class="form-input mt-1" value="${character.maxMp}"></div>
                             <div><label class="text-gray-400">최소 공격력</label><input id="edit-min-attack" type="number" class="form-input mt-1" value="${character.minAttack}"></div><div><label class="text-gray-400">최대 공격력</label><input id="edit-max-attack" type="number" class="form-input mt-1" value="${character.maxAttack}"></div>
                             <div><label class="text-gray-400">최소 방어력</label><input id="edit-min-defense" type="number" class="form-input mt-1" value="${character.minDefense}"></div><div><label class="text-gray-400">최대 방어력</label><input id="edit-max-defense" type="number" class="form-input mt-1" value="${character.maxDefense}"></div>
+                            <div><label class="text-gray-400">고유 추가 데미지</label><input id="edit-bonus-damage" type="number" class="form-input mt-1" value="${character.bonusDamage || 0}"></div>
                             <div><label class="text-gray-400">크기 (예: 1, 2)</label><input id="edit-size" type="number" class="form-input mt-1" value="${character.size || 1}"></div>
                         </div>
                         <div class="flex items-center gap-2 pt-4 border-t border-gray-700/50">
@@ -4131,13 +4381,12 @@ function renderLoginStatus() {
                     imageUrl: document.getElementById('edit-image-url').value.trim(), 
                     hp: parseInt(document.getElementById('edit-hp').value), 
                     maxHp: parseInt(document.getElementById('edit-max-hp').value), 
-                    mp: parseInt(document.getElementById('edit-mp').value), 
-                    maxMp: parseInt(document.getElementById('edit-max-mp').value), 
                     minAttack: parseInt(document.getElementById('edit-min-attack').value),
                     maxAttack: parseInt(document.getElementById('edit-max-attack').value),
                     minDefense: parseInt(document.getElementById('edit-min-defense').value),
                     maxDefense: parseInt(document.getElementById('edit-max-defense').value),
                     size: parseInt(document.getElementById('edit-size').value) || 1,
+                    bonusDamage: parseInt(document.getElementById('edit-bonus-damage').value) || 0,
                     ultImage: document.getElementById('edit-ult-image').value.trim(),
                     skills: [
                         document.getElementById('edit-skill-1').value, 
@@ -4190,11 +4439,7 @@ function renderLoginStatus() {
                         <p class="profile-char-type">${character.type}</p>
                         <div class="profile-stats-grid">
                             ${buildStat('hp', '생명력', `${character.hp} / ${character.maxHp}`)}
-                            ${buildStat('inf', '감염도', `${character.mp} / ${character.maxMp}`)}
-                            ${buildStat('attack', '공격력', `${character.minAttack} - ${character.maxAttack}`)}
-                            ${buildStat('defense', '방어력', `${character.minDefense} - ${character.maxDefense}`)}
                             ${buildStat('move', '이동력', `${effectiveMoveRange} 칸`)}
-                            ${buildStat('size', '크기', `${character.size}x${character.size}`)}
                         </div>
                     </div>
                     <div class="mt-6">
@@ -4418,12 +4663,22 @@ async function resetAllCharacterStats() {
 
         if (type === 'normal') {
             delete newTiles[tileKey];
+        } else if (type === 'destructible') {
+            // [추가] 파괴 가능 벽은 HP 정보를 가짐
+            newTiles[tileKey] = { type, hp: 30, maxHp: 30 }; 
         } else {
             newTiles[tileKey] = { type };
         }
         
         await setDoc(doc(db, 'games', gameId, 'board', 'tiles'), { tiles: newTiles });
-        await logAction(`🗺️ 관리자가 (${x}, ${y}) 칸을 ${type === 'obstacle' ? '장애물(🚫)' : (type === 'damage' ? '대미지 칸(🩸)' : '일반 칸')}으로 설정했습니다.`, "admin");
+        
+        // 로그 메시지 수정
+        let typeName = '일반 칸';
+        if (type === 'obstacle') typeName = '장애물(🚫)';
+        else if (type === 'damage') typeName = '대미지 칸(🩸)';
+        else if (type === 'destructible') typeName = '파괴 벽(🧱)';
+        
+        await logAction(`🗺️ 관리자가 (${x}, ${y}) 칸을 ${typeName}으로 설정했습니다.`, "admin");
     }
     
     // NEW: Save Background Image
@@ -4745,7 +5000,6 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
                     type: document.getElementById(`admin-type-${id}`).value,
                     icon: document.getElementById(`admin-icon-${id}`).value,
                     category: document.getElementById(`admin-category-${id}`).value,
-                    mpCost: parseInt(document.getElementById(`admin-mpcost-${id}`).value) || 0,
                     hpCost: parseInt(document.getElementById(`admin-hpcost-${id}`).value) || 0, // [수정] 누락된 hpCost 추가
                     isAoe: document.getElementById(`admin-isAoe-${id}`).checked,
                     aoeRange: parseInt(document.getElementById(`admin-aoeRange-${id}`).value) || 0,
@@ -4790,7 +5044,7 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
         document.getElementById('add-new-skill-btn').onclick = async () => {
             const newId = document.getElementById('new-skill-id').value.trim();
             if (!newId || SKILLS[newId]) { showCustomModal("오류", "유효하지 않거나 중복된 스킬 ID입니다.", [{text: "확인", class: "bg-red-600"}]); return; }
-            const newSkill = { id: newId, name: document.getElementById('new-skill-name').value, type: document.getElementById('new-skill-type').value, icon: document.getElementById('new-skill-icon').value, range: parseFloat(document.getElementById('new-skill-range').value) || 0, multiplier: parseFloat(document.getElementById('new-skill-multiplier').value) || 0, category: document.getElementById('new-skill-category').value, mpCost: parseInt(document.getElementById('new-skill-mpcost').value) || 0, hpCost: 0, isAoe: document.getElementById('new-skill-isAoe').checked, aoeRange: parseInt(document.getElementById('new-skill-aoeRange').value) || 0, aoeShape: document.getElementById('new-skill-aoeShape').value, rangeShape: document.getElementById('new-skill-rangeShape').value };
+            const newSkill = { id: newId, name: document.getElementById('new-skill-name').value, type: document.getElementById('new-skill-type').value, icon: document.getElementById('new-skill-icon').value, range: parseFloat(document.getElementById('new-skill-range').value) || 0, multiplier: parseFloat(document.getElementById('new-skill-multiplier').value) || 0, category: document.getElementById('new-skill-category').value, hpCost: 0, isAoe: document.getElementById('new-skill-isAoe').checked, aoeRange: parseInt(document.getElementById('new-skill-aoeRange').value) || 0, aoeShape: document.getElementById('new-skill-aoeShape').value, rangeShape: document.getElementById('new-skill-rangeShape').value };
              const effectId = document.getElementById('new-skill-effect-id').value;
     if (effectId) {
         const effectInfo = PREDEFINED_EFFECTS[effectId];
@@ -4815,7 +5069,7 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
             if (!name) { showCustomModal("오류", "이름을 입력해야 합니다.", [{text: "확인", class: "bg-red-600"}]); return; }
             const type = document.getElementById('new-char-type').value;
             const skills = document.getElementById('new-char-skills').value.split(',').map(s => s.trim()).filter(Boolean);
-            const newChar = { name: name, type: type, imageUrl: document.getElementById('new-char-imageUrl').value.trim(), hp: parseInt(document.getElementById('new-char-hp').value) || 100, maxHp: parseInt(document.getElementById('new-char-hp').value) || 100, mp: parseInt(document.getElementById('new-char-mp').value) || 50, maxMp: parseInt(document.getElementById('new-char-mp').value) || 50, minAttack: parseInt(document.getElementById('new-char-min-attack').value) || 10, maxAttack: parseInt(document.getElementById('new-char-max-attack').value) || 15, minDefense: parseInt(document.getElementById('new-char-min-defense').value) || 3, maxDefense: parseInt(document.getElementById('new-char-max-defense').value) || 7, size: parseInt(document.getElementById('new-char-size').value) || 1, skills: skills, x: null, y: null, password: type === 'PC' ? DEFAULT_PC_PASSWORD : '' };
+            const newChar = { name: name, type: type, imageUrl: document.getElementById('new-char-imageUrl').value.trim(), hp: parseInt(document.getElementById('new-char-hp').value) || 100, maxHp: parseInt(document.getElementById('new-char-hp').value) || 100, minAttack: parseInt(document.getElementById('new-char-min-attack').value) || 10, maxAttack: parseInt(document.getElementById('new-char-max-attack').value) || 15, minDefense: parseInt(document.getElementById('new-char-min-defense').value) || 3, maxDefense: parseInt(document.getElementById('new-char-max-defense').value) || 7, size: parseInt(document.getElementById('new-char-size').value) || 1, skills: skills, x: null, y: null, password: type === 'PC' ? DEFAULT_PC_PASSWORD : '' };
             if (gameId) {
                 await addDoc(collection(db, "games", gameId, "characters"), newChar);
                 showCustomModal("성공", `'${newChar.name}' 캐릭터가 추가되었습니다.`, [{text: "확인", class: "bg-green-600"}]);
@@ -4844,7 +5098,7 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
                     <option value="cross" ${s.rangeShape === 'cross' ? 'selected' : ''}>십자</option>
                 </select>
             </div>
-            <div><label class="block text-xs font-medium text-gray-400">계수 (배율)</label><input id="admin-multiplier-${s.id}" type="number" step="0.1" class="form-input mt-1" value="${s.multiplier}"></div><div><label class="block text-xs font-medium text-gray-400">MP 비용</label><input id="admin-mpcost-${s.id}" type="number" class="form-input mt-1" value="${s.mpCost || 0}"></div>
+            <div><label class="block text-xs font-medium text-gray-400">계수 (배율)</label><input id="admin-multiplier-${s.id}" type="number" step="0.1" class="form-input mt-1" value="${s.multiplier}"></div>
             <div><label class="block text-xs font-medium text-gray-400">HP 비용</label><input id="admin-hpcost-${s.id}" type="number" class="form-input mt-1" value="${s.hpCost || 0}"></div>
             <input id="admin-type-${s.id}" type="hidden" value="${s.type}">
         </div>
@@ -4926,7 +5180,6 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
                 </select>
             </div>
             <div><label class="block text-xs font-medium text-gray-400">계수 (배율)</label><input id="new-skill-multiplier" type="number" step="0.1" class="form-input mt-1"></div>
-            <div><label class="block text-xs font-medium text-gray-400">MP 비용</label><input id="new-skill-mpcost" type="number" class="form-input mt-1" value="0"></div>
         </div>
         <div class="mt-4 pt-4 border-t border-gray-600">
             <h5 class="font-bold text-md mb-2 text-yellow-400">광역 스킬(AoE) 설정</h5>
@@ -4978,9 +5231,8 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
                 <select id="new-char-type" class="form-input bg-gray-700"><option value="PC">PC</option><option value="ENEMY">ENEMY</option></select>
                 <input id="new-char-imageUrl" placeholder="이미지 URL" class="form-input col-span-2">
                 <div class="relative"><input id="new-char-hp" type="number" placeholder=" " class="form-input peer" value="100"><label for="new-char-hp" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">HP (체력)</label></div>
-                <div class="relative"><input id="new-char-mp" type="number" placeholder=" " class="form-input peer" value="50"><label for="new-char-mp" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">INF (감염도)</label></div>
-                <div class="relative"><input id="new-char-min-attack" type="number" placeholder=" " class="form-input peer" value="10"><label for="new-char-min-attack" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최소 공격력</label></div>
-                <div class="relative"><input id="new-char-max-attack" type="number" placeholder=" " class="form-input peer" value="15"><label for="new-char-max-attack" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최대 공격력</label></div>
+                <div class="relative"><input id="new-char-min-attack" type="number" placeholder=" " class="form-input peer" value="1"><label for="new-char-min-attack" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최소 공격력</label></div>
+                <div class="relative"><input id="new-char-max-attack" type="number" placeholder=" " class="form-input peer" value="20"><label for="new-char-max-attack" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최대 공격력</label></div>
                 <div class="relative"><input id="new-char-min-defense" type="number" placeholder=" " class="form-input peer" value="3"><label for="new-char-min-defense" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최소 방어력</label></div>
                 <div class="relative"><input id="new-char-max-defense" type="number" placeholder=" " class="form-input peer" value="7"><label for="new-char-max-defense" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최대 방어력</label></div>
                 <div class="relative"><input id="new-char-size" type="number" placeholder=" " class="form-input peer" value="1"><label for="new-char-size" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">크기 (1x1, 2x2...)</label></div>
@@ -5025,7 +5277,9 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
         });
 
         const tileKey = `${targetX},${targetY}`;
-        const isObstacle = boardTiles[tileKey]?.type === 'obstacle';
+        const tile = boardTiles[tileKey];
+        // [수정] obstacle 뿐만 아니라 destructible 타입도 이동 불가로 설정
+        const isObstacle = tile?.type === 'obstacle' || tile?.type === 'destructible';
         
         return isCharOccupied || isObstacle;
     }
@@ -5707,24 +5961,17 @@ document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter
         }
     }
 
-    // 3. Firestore 데이터와 플레이어 동기화
     function syncBgmPlayer(bgmData) {
         if (!player || !isYoutubeReady) return;
 
-        // 로컬 UI 표시 여부
         const controlsDiv = document.getElementById('bgm-local-controls');
         if (bgmData.videoId && bgmData.isPlaying) {
             controlsDiv.classList.remove('hidden');
             document.getElementById('bgm-now-playing').classList.remove('hidden');
-            setTimeout(() => document.getElementById('bgm-now-playing').classList.add('hidden'), 5000); // 5초 뒤 숨김
-        } else {
-            // 음악이 없으면 버튼 숨김 (선택 사항)
-             // controlsDiv.classList.add('hidden'); 
+            setTimeout(() => document.getElementById('bgm-now-playing').classList.add('hidden'), 5000);
         }
 
-        // 비디오 변경 체크
         const currentVideoUrl = player.getVideoUrl();
-        // getVideoUrl은 전체 주소를 반환하므로 ID 포함 여부 확인
         const isSameVideo = currentVideoUrl && currentVideoUrl.includes(bgmData.videoId);
 
         if (bgmData.videoId && !isSameVideo) {
@@ -5734,7 +5981,6 @@ document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter
             return;
         }
 
-        // 재생/정지 상태 동기화
         const playerState = player.getPlayerState();
         if (bgmData.isPlaying) {
             if (playerState !== YT.PlayerState.PLAYING && playerState !== YT.PlayerState.BUFFERING) {
@@ -5746,10 +5992,13 @@ document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter
             }
         }
 
-        // 볼륨 동기화 (관리자 설정 볼륨 * 로컬 볼륨 비율)
-        // 관리자가 100으로 틀어도, 내가 로컬을 50으로 줄이면 50으로 들림
-        const adminVolume = bgmData.volume || 50;
-        const finalVolume = (adminVolume * (isLocalMuted ? 0 : 1)); // 로컬 음소거 반영
+        // ★ [수정됨] 볼륨 계산 로직
+        // 최종 볼륨 = 관리자 설정(0~100) * (내 슬라이더 설정(0~100) / 100)
+        // 예: 관리자 100, 나 50 -> 실제 50
+        // 예: 관리자 50, 나 50 -> 실제 25
+        const adminVolume = bgmData.volume !== undefined ? bgmData.volume : 50;
+        const myLocalRatio = localVolume / 100; 
+        const finalVolume = isLocalMuted ? 0 : (adminVolume * myLocalRatio);
         
         if (player.setVolume) {
              player.setVolume(finalVolume);
@@ -5771,30 +6020,54 @@ document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter
         return (match && match[7].length == 11) ? match[7] : false;
     }
 
-    // 6. 로컬 컨트롤러 이벤트 리스너
+    // 6. 로컬 컨트롤러 이벤트 리스너 (개선됨)
     const bgmToggleBtn = document.getElementById('bgm-toggle-btn');
-    bgmToggleBtn.addEventListener('click', () => {
-        isLocalMuted = !isLocalMuted;
-        
-        const iconOn = document.getElementById('icon-sound-on');
-        const iconOff = document.getElementById('icon-sound-off');
-        
-        if (isLocalMuted) {
-            iconOn.classList.add('hidden');
-            iconOff.classList.remove('hidden');
-            bgmToggleBtn.classList.add('bg-red-900');
-            bgmToggleBtn.classList.remove('bg-gray-800');
-        } else {
-            iconOn.classList.remove('hidden');
-            iconOff.classList.add('hidden');
-            bgmToggleBtn.classList.remove('bg-red-900');
-            bgmToggleBtn.classList.add('bg-gray-800');
-        }
-        
-        // 볼륨 즉시 적용
-        syncBgmPlayer(currentBgmData);
-    });
+    const localVolumeSlider = document.getElementById('local-volume-slider');
+    const bgmControlsContainer = document.getElementById('bgm-local-controls');
 
+    // [1] 슬라이더 조작 이벤트
+    if (localVolumeSlider) {
+        localVolumeSlider.addEventListener('input', (e) => {
+            localVolume = parseInt(e.target.value);
+            
+            // 슬라이더 값에 따라 아이콘 자동 변경 (0이면 음소거 아이콘)
+            const iconOn = document.getElementById('icon-sound-on');
+            const iconOff = document.getElementById('icon-sound-off');
+            
+            if (localVolume === 0) {
+                iconOn.classList.add('hidden');
+                iconOff.classList.remove('hidden');
+                bgmToggleBtn.classList.add('text-red-400'); // 버튼 색상도 붉게
+            } else {
+                iconOn.classList.remove('hidden');
+                iconOff.classList.add('hidden');
+                bgmToggleBtn.classList.remove('text-red-400');
+            }
+            
+            // 즉시 볼륨 적용
+            syncBgmPlayer(currentBgmData);
+        });
+        
+        // 슬라이더 클릭 시 컨테이너가 닫히지 않도록 이벤트 전파 중단
+        localVolumeSlider.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    // [2] 메인 아이콘 버튼 클릭 이벤트 (슬라이더 표시 토글)
+    if (bgmToggleBtn) {
+        bgmToggleBtn.addEventListener('click', (e) => {
+            // 클릭 시 슬라이더 표시 상태를 토글합니다.
+            bgmControlsContainer.classList.toggle('show-slider');
+            e.stopPropagation(); // 이벤트 전파 중단
+        });
+    }
+
+    // [3] 외부 클릭 시 슬라이더 닫기 (UX 개선)
+    document.addEventListener('click', (e) => {
+        // 컨트롤러 영역 밖을 클릭하면 슬라이더를 닫습니다.
+        if (bgmControlsContainer && !bgmControlsContainer.contains(e.target)) {
+            bgmControlsContainer.classList.remove('show-slider');
+        }
+    });
 </script>
 </body>
 </html>
