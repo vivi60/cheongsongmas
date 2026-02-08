@@ -1557,7 +1557,9 @@ const combatTextStartTime = new Date();
     strengthDown: { id: 'strengthDown', name: '공격력 약화', value: 0.5 },
     regenerating: { id: 'regenerating', name: '재생', effectType: 'heal' },
     defenseUp: { id: 'defenseUp', name: '방어력 강화', value: 1.5 },
-    defenseDown: { id: 'defenseDown', name: '방어력 약화', value: 0.5 }
+    defenseDown: { id: 'defenseDown', name: '방어력 약화', value: 0.5 },
+    // ▼▼▼ [추가] 회피 상태 (공격 무효화) ▼▼▼
+    evading: { id: 'evading', name: '회피 중', icon: '💨' } 
 };
 
     const STATUS_EFFECT_ICONS = {
@@ -1598,10 +1600,37 @@ const combatTextStartTime = new Date();
             name: '기본 공격',           // 화면에 보일 이름
             type: 'Melee',             // 근거리 공격 (원거리로 하려면 'Ranged'로 변경)
             range: 1,                  // 사거리 1칸
-            rangeShape: 'diamond',     // 마름모 모양 범위
+            rangeShape: 'square',     // 마름모 모양 범위
             multiplier: 0,             // ★ 핵심: 스킬 자체 추가 데미지는 0
-            icon: '👊',                // 주먹 아이콘
+            icon: '👊',                //. 주먹 아이콘
             category: 'Attack'         // 공격 카테고리
+        },
+
+        // ▼▼▼ [추가] 회피 스킬 (자신에게 1턴간 회피 상태 부여)
+        'evade': { 
+            id: 'evade', 
+            name: '회피', 
+            type: 'Utility', 
+            range: 0,             // 사거리 0 = 자신만 대상
+            rangeShape: 'square', 
+            multiplier: 0, 
+            icon: '💨', 
+            category: 'Defense',
+            hpCost: 0,
+            appliesEffect: { id: 'evading', turns: 1 } // 1턴 동안 유지
+        },
+
+        // ▼▼▼ [추가] 도주 스킬 (전투 이탈)
+        'flee': { 
+            id: 'flee', 
+            name: '도주', 
+            type: 'Utility', 
+            range: 0,             // 사거리 0 = 자신만 대상
+            rangeShape: 'square', 
+            multiplier: 0, 
+            icon: '🏃💨', 
+            category: 'Utility',
+            hpCost: 0
         },
 
         'zombie_attack': { 
@@ -1609,14 +1638,34 @@ const combatTextStartTime = new Date();
             name: '할퀴기',           // 화면에 보일 이름
             type: 'Melee',             // 근거리 공격 (원거리로 하려면 'Ranged'로 변경)
             range: 1,                  // 사거리 1칸
-            rangeShape: 'diamond',     // 마름모 모양 범위
+            rangeShape: 'square',     // 마름모 모양 범위
             multiplier: 0,             // ★ 핵심: 스킬 자체 추가 데미지는 0
             icon: '⚡︎',                // 주먹 아이콘
             category: 'Attack'         // 공격 카테고리
         },
 
+        'zombie_bite': { 
+            id: 'zombie_bite',        // 고유 ID
+            name: '물기',           // 화면에 보일 이름
+            type: 'Melee',             // 근거리 공격 (원거리로 하려면 'Ranged'로 변경)
+            range: 1,                  // 사거리 1칸
+            rangeShape: 'square',     // 마름모 모양 범위
+            multiplier: 0,             // ★ 핵심: 스킬 자체 추가 데미지는 0
+            icon: '🦷',                // 주먹 아이콘
+            category: 'Attack'         // 공격 카테고리
+        },
 
 
+
+        'beg_for_life': {
+    name: '비굴한 구걸',
+    category: 'Ultimate',
+    range: 0,
+    isAoe: false,
+    // [효과] 본인은 공격 대상 제외(일시적), 3턴간 행동 불능(stunned)
+    appliesEffect: { id: 'stunned', turns: 4 }, // 내 턴 종료 시 깎이는 걸 고려해 4로 설정 (실제 3턴 체감)
+    description: '공격 대상에서 제외되지만, 주변 1칸 아군에게 피해를 줍니다. 사용 후 3턴간 행동 불가.'
+},
 
 };
     let SKILLS = {};
@@ -1735,49 +1784,49 @@ const loginStatusModal = document.getElementById('login-status-modal');
         const batch = writeBatch(db);
         const pcData = [ 
                 
-                { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a0ad5a15-1a27-4fcf-950a-47d66c54c960", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "강초아", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=4e3f5fc8-c06a-4afb-bb2c-60dbad76fa67", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a9e550da-0ff1-4456-bbab-0fa5e875a2a7", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=729bd3ba-0e4f-4ebe-9d03-dc741c03ed11", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "매튜 백", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%86%E1%85%A2%E1%84%90%E1%85%B2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d5f5c4f1-7b74-463b-9232-eea35d141985", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=723259a0-b65b-4f5e-9355-b0b5f107fc03", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=558a2f3e-6dc6-4594-88b7-e8a013aa5c59", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d31747b1-0b64-4d49-9f06-d792c8d2ba95", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c65bb78e-a90b-4e5b-8ceb-c431f9781fd0", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a51252e9-b0b5-481c-8fa2-b2193f63703a", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "이기조", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%80%E1%85%B5%E1%84%8C%E1%85%A9_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=3afe12b7-a49b-42ed-b23c-81a21cb66049", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=8d1c94f4-c33d-49a9-9456-6fdd3b115b2a", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=672b3c7f-8e8c-4413-a80e-d71d9470fb10", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d9e3f806-066e-4238-a8d5-75225712593b", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2b7a9b21-bddd-4b53-93e9-fbd3f490e5a9", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "정해찬", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8C%E1%85%A5%E1%86%BC%E1%84%92%E1%85%A2%E1%84%8E%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=aa7076b1-18d2-486c-8865-48d4436dc42c", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2503afd9-ce89-40d2-b3aa-9200b5135457", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 7, skills: ['basic_attack'], order: 1 },
-                { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=392200b4-afa5-44c0-9160-c9f3782de216", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
-                { name: "한바다", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=4f43f8d4-1813-441f-94bc-38a223aa21ee", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, skills: ['basic_attack'], order: 1 },
+                { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee','beg_for_life'], order: 1 },
+                { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a0ad5a15-1a27-4fcf-950a-47d66c54c960", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강초아", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=4e3f5fc8-c06a-4afb-bb2c-60dbad76fa67", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a9e550da-0ff1-4456-bbab-0fa5e875a2a7", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 3, agility: 7,  skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=729bd3ba-0e4f-4ebe-9d03-dc741c03ed11", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "매튜 백", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%86%E1%85%A2%E1%84%90%E1%85%B2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d5f5c4f1-7b74-463b-9232-eea35d141985", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=723259a0-b65b-4f5e-9355-b0b5f107fc03", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=558a2f3e-6dc6-4594-88b7-e8a013aa5c59", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d31747b1-0b64-4d49-9f06-d792c8d2ba95", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c65bb78e-a90b-4e5b-8ceb-c431f9781fd0", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a51252e9-b0b5-481c-8fa2-b2193f63703a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "이기조", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%80%E1%85%B5%E1%84%8C%E1%85%A9_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=3afe12b7-a49b-42ed-b23c-81a21cb66049", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=8d1c94f4-c33d-49a9-9456-6fdd3b115b2a", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=672b3c7f-8e8c-4413-a80e-d71d9470fb10", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d9e3f806-066e-4238-a8d5-75225712593b", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2b7a9b21-bddd-4b53-93e9-fbd3f490e5a9", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "정해찬", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8C%E1%85%A5%E1%86%BC%E1%84%92%E1%85%A2%E1%84%8E%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=aa7076b1-18d2-486c-8865-48d4436dc42c", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 9, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2503afd9-ce89-40d2-b3aa-9200b5135457", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=392200b4-afa5-44c0-9160-c9f3782de216", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "한바다", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=4f43f8d4-1813-441f-94bc-38a223aa21ee", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 
             
             
             
             ];
         const enemyData = [ 
-            { name: "좀비1", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 }, 
-            { name: "좀비2", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 }, 
-            { name: "좀비3", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 }, 
-            { name: "좀비4", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 }, 
-            { name: "좀비5", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비6", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비7", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비8", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비9", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비10", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비11", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비12", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비13", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비14", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
-            { name: "좀비15", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 3, skills: ['zombie_attack'], order: 2 },
+            { name: "좀비1", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 }, 
+            { name: "좀비2", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 }, 
+            { name: "좀비3", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 }, 
+            { name: "좀비4", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 }, 
+            { name: "좀비5", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비6", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비7", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비8", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비9", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비10", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비11", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비12", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비13", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비14", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비15", img: "", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
         ];
         [...pcData, ...enemyData].forEach(char => {
             const charPassword = char.type === 'PC' ? DEFAULT_PC_PASSWORD : ''; 
@@ -1790,9 +1839,8 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 hp: 100, maxHp: 100, 
                 ultimateUsed: false, 
                 minAttack: 1, maxAttack: 20, 
-                minDefense: 3, maxDefense: 7, 
                 bonusDamage: char.bonusDamage || 0,
-                baseMoveRange: char.moveRange !== undefined ? char.moveRange : 1,
+                agility: char.agility !== undefined ? char.agility : 1,
                 moveRange: char.moveRange !== undefined ? char.moveRange : 1,
                 x: null, y: null, 
                 skills: char.skills || [], 
@@ -2006,28 +2054,6 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 if (currentTurnChar && currentTurnChar.isAuto) {
                     setTimeout(() => runAutoTurn(currentTurnChar), 1000);
                 }
-
-                // ▼▼▼ [추가] 패턴형 이동력 적용 (홀수턴 내림 / 짝수턴 올림) ▼▼▼
-                if (isAdmin && currentTurnChar && currentTurnChar.type === 'PC') {
-                    
-                    // 1. 원래 이동력(base) 가져오기 (없으면 현재 이동력 사용)
-                    const base = currentTurnChar.baseMoveRange || currentTurnChar.moveRange || 1;
-                    
-                    // 2. 라운드에 따라 계산
-                    // 홀수: 내림 (floor), 짝수: 올림 (ceil)
-                    // Math.max(1, ...) 로 최소 1칸은 보장
-                    let calculatedRange = (round % 2 !== 0) ? Math.floor(base / 2) : Math.ceil(base / 2);
-                    const newRange = Math.max(1, calculatedRange);
-                    
-                    // 3. 값이 다를 때만 DB 업데이트 & 로그 출력
-                    if (currentTurnChar.moveRange !== newRange) {
-                        updateDoc(doc(db, 'games', gameId, 'characters', turnCharId), { moveRange: newRange });
-                        
-                        // 로그에 출력 (예: 강나리의 이동력: 7 → 3칸)
-                        logAction(`🏃 ${currentTurnChar.name}의 이동력: ${base} → **${newRange}칸** (패턴 적용)`, "move");
-                    }
-                }
-                // ▲▲▲ [여기까지 추가] ▲▲▲
             }
             previousTurnCharId = turnCharId;
             currentTurnIndex = characters.findIndex(c => c.id === turnCharId);
@@ -2102,62 +2128,91 @@ function listenForCombatTextEvents(gameId) {
 }
     const delay = ms => new Promise(res => setTimeout(res, ms));
     async function logAction(message, type = "system") { if (gameId) await addDoc(collection(db, "games", gameId, "logs"), { message, type, timestamp: serverTimestamp() }); }
+    
+    
     async function advanceRoundPhase() {
-    if (roundPhase === 'PLAYER_PHASE') {
-        await setDoc(doc(db, 'games', gameId), { roundPhase: 'ENEMY_EXECUTION' }, { merge: true });
-    } 
-    else if (roundPhase === 'ENEMY_EXECUTION') {
-        currentlyActingEnemyId = null; 
+        if (!gameId) return;
 
-        const endOfRoundBatch = writeBatch(db);
-        const livingCharacters = characters.filter(c => c.hp > 0 && c.x !== null);
+        // [중요] 모든 단계 전환 및 데이터 수정 로직을 isAdmin(관리자)만 수행하도록 감쌉니다.
+        if (!isAdmin) return; 
 
-        for (const char of livingCharacters) {
-            const effects = char.statusEffects || [];
-            if (effects.length > 0) {
-                const updatedEffects = effects.reduce((acc, effect) => {
+        if (roundPhase === 'PLAYER_PHASE') {
+            await setDoc(doc(db, 'games', gameId), { roundPhase: 'ENEMY_EXECUTION' }, { merge: true });
+        } 
+        else if (roundPhase === 'ENEMY_EXECUTION') {
+            currentlyActingEnemyId = null; 
+            
+            const endOfRoundBatch = writeBatch(db);
+
+            // 관리자 브라우저에 있는 현재 캐릭터 목록을 기준으로 턴 계산
+            characters.forEach(char => {
+                let updates = {
+                    hasActedThisRound: false,
+                    nextAction: null
+                };
+
+                // 상태 효과가 있을 때만 처리
+                if (char.statusEffects && char.statusEffects.length > 0) {
+                    const updatedEffects = char.statusEffects
+                        .map(effect => ({ ...effect, turns: effect.turns - 1 }))
+                        .filter(effect => effect.turns > 0);
                     
-                 
-                    if (effect.isNew) {
-                        const { isNew, ...rest } = effect; 
-                        acc.push(rest);
-                    } else {
-                
-                        const newTurnsRemaining = effect.turnsRemaining - 1;
-                        if (newTurnsRemaining > 0) {
-                            acc.push({ ...effect, turnsRemaining: newTurnsRemaining });
-                        } else {
-                            logAction(`⏱️ ${char.name}의 [${effect.name}] 효과가 사라졌습니다.`, "system");
-                        }
+                    updates.statusEffects = updatedEffects;
+
+                    // 스턴이 남았다면 다음 라운드도 행동 완료 처리
+                    if (updatedEffects.some(e => e.id === 'stunned')) {
+                        updates.hasActedThisRound = true;
                     }
-                
+                } else {
+                    // 효과가 없는 캐릭터도 명시적으로 빈 배열로 업데이트하여 중복 방지
+                    updates.statusEffects = [];
+                }
 
-                    return acc;
-                }, []);
                 const charRef = doc(db, 'games', gameId, 'characters', char.id);
-                endOfRoundBatch.update(charRef, { statusEffects: updatedEffects });
+                endOfRoundBatch.update(charRef, updates);
+            });
+
+            const newRound = round + 1;
+            
+            // 최대 라운드 체크
+            if (maxRounds > 0 && newRound > maxRounds) {
+                await endOfRoundBatch.commit();
+                await logAction(`🛑 전투 종료: 최대 라운드(${maxRounds}) 도달`, "system");
+                await setDoc(doc(db, 'games', gameId), { 
+                    gameState: 'ENDED',
+                    gameResult: { title: "시간 종료", message: `최대 라운드(${maxRounds})에 도달했습니다.` }
+                }, { merge: true });
+                showGameSummaryModal("시간 종료", `최대 라운드(${maxRounds})에 도달했습니다.`);
+                return; 
             }
+
+            // 모든 변경 사항을 한 번의 배치로 커밋 (가장 안전)
+            await endOfRoundBatch.commit();
+
+            // 라운드 수와 페이즈 업데이트
+            await setDoc(doc(db, 'games', gameId), { 
+                round: newRound,
+                roundPhase: 'ENEMY_FORESHADOW' 
+            }, { merge: true });
+
+            render(); 
         }
-        await endOfRoundBatch.commit();
-        const newRound = round + 1;
-
-        showBannerAnnouncement(`Round ${newRound}`, "적 행동 예고");
-
-        // DB 상태 업데이트
-        await setDoc(doc(db, 'games', gameId), { 
-            round: newRound,
-            roundPhase: 'ENEMY_FORESHADOW' 
-        }, { merge: true });
-        
-        // 모든 PC의 행동 여부 초기화
-        const batch = writeBatch(db);
-        characters.filter(c => c.type === 'PC').forEach(pc => {
-            const charRef = doc(db, 'games', gameId, 'characters', pc.id);
-            batch.update(charRef, { hasActedThisRound: false });
-        });
-        await batch.commit();
     }
+
+// [추가] 캐릭터의 특정 스탯을 영구적으로 변경하는 함수
+async function updateStatPermanently(charId, statName, amount) {
+    const char = characters.find(c => c.id === charId);
+    if (!char) return;
+    
+    // 현재 값에서 amount만큼 더함 (감소시키려면 음수를 넣음)
+    const newValue = Math.max(1, (char[statName] || 0) + amount);
+    
+    await updateDoc(doc(db, 'games', gameId, 'characters', charId), {
+        [statName]: newValue
+    });
+    await logAction(`📉 ${char.name}의 ${statName} 스탯이 ${newValue}이(가) 되었습니다.`, "system");
 }
+
 // [수정] 모든 유저가 공통으로 실행할 연출 함수
 async function runUltimateCutscene(attacker, skill) {
     const cutscene = document.getElementById('ultimate-cutscene');
@@ -2859,6 +2914,37 @@ function isAttackPossible(attacker, target, attackRange) {
         const skill = SKILLS[skillId];
         if (!skill) return;
 
+        // [추가] 비굴한 구걸 상태(stunned 수치가 높음)일 때 적의 단일 공격 대상에서 제외
+    // (완전 자동화를 원할 경우 적 AI 로직에도 추가해야 하지만, 우선 수동 판정을 위해 로그 안내를 강화합니다)
+    if (defender.statusEffects?.some(e => e.id === 'stunned' && e.turns >= 3)) {
+        // 이 상태일 때는 데미지를 입지 않거나 공격이 빗나감
+        await logAction(`🙈 적들이 ${defender.name}을(를) 한심하게 여기며 무시합니다!`, "system");
+        return false; 
+    }
+
+        // ▼▼▼ [수정] 회피 상태 체크 로직 (확률 적용) ▼▼▼
+        if (defender.statusEffects?.some(e => e.id === 'evading')) {
+            const agility = defender.agility || 10;
+            const evadeChance = Math.min(100, agility * 10);
+            const roll = Math.floor(Math.random() * 100) + 1;
+
+            if (roll <= evadeChance) {
+                await triggerCombatText(defender, "MISS!", "damage");
+                await logAction(`💨 ${defender.name}이(가) 공격을 휙 피했습니다! (확률 ${evadeChance}%)`, "system");
+                return false; // 데미지 0
+            } else {
+                await logAction(`💥 ${defender.name}이(가) 피하려고 했지만 실패했습니다! (확률 ${evadeChance}%)`, "damage");
+                // 여기서 return 하지 않고 아래로 내려가서 데미지를 입습니다.
+            }
+        }
+        // [추가] 피해 전가 로직 (예: 범지태의 피해 대신 받기)
+    // 'cover' 상태인 캐릭터가 있다면 그 캐릭터가 대신 피해를 입도록 대상을 바꿈
+    const protector = characters.find(c => c.statusEffects?.some(e => e.id === 'covering'));
+    let actualDefender = defender;
+    if (protector && defender.id !== protector.id) {
+        actualDefender = protector;
+        await logAction(`🛡️ ${protector.name}이(가) 대신 공격을 막아섰습니다!`, "system");
+    }
         // ... (타격 효과 애니메이션 부분은 그대로 둠) ...
         const defenderToken = document.querySelector(`.character-token[data-char-id="${defender.id}"]`);
         if (defenderToken) {
@@ -3136,182 +3222,168 @@ function triggerWallDestructionEffect(x, y) {
     }
 }
 
-    async function executeSkill(attacker, target, skillId) {
+   async function executeSkill(attacker, target, skillId) {
         const skill = SKILLS[skillId];
-        // target은 캐릭터 객체일 수도 있고, {x, y} 좌표 객체일 수도 있습니다.
         if (!skill || !target) return;
 
-        // [1] 궁극기 연출 (기존 코드 유지)
-        // [수정] 궁극기 사용 제한 체크
-        if (skill.category === 'Ultimate') {
-            if (attacker.ultimateUsed) {
-                await logAction(`⚠️ ${attacker.name}은(는) 이미 궁극기를 사용했습니다! (게임당 1회 제한)`, "system");
-                return;
-            }
-
-            // 궁극기 연출 실행
-            await setDoc(doc(db, 'games', gameId), { 
-                ultimateEvent: {
-                    attackerId: attacker.id,
-                    skillId: skillId,
-                    timestamp: serverTimestamp()
-                }
-            }, { merge: true });
-            
-            // ★ 궁극기 사용 처리 (DB 업데이트)
-            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { ultimateUsed: true });
-            
-            await delay(6500); 
-        }
-
+        // [중요] 변수 선언 및 초기화
         let actionSucceeded = false;
         let affectedTargets = [];
-        let tilesChanged = false; // 타일 변경 여부 체크용
+        let tilesChanged = false; 
 
-        // 공격 및 궁극기 로직
-        if (skill.category === 'Attack' || skill.category === 'Ultimate') {
-            
-            // ★ [추가] 타일 타격 로직 (내부 함수)
+        // [1] 궁극기 공통: 연출 및 1회 제한 체크
+        if (skill.category === 'Ultimate') {
+            if (attacker.ultimateUsed) {
+                await logAction(`⚠️ ${attacker.name}은(는) 이미 궁극기를 사용했습니다!`, "system");
+                return;
+            }
+            await setDoc(doc(db, 'games', gameId), { 
+                ultimateEvent: { attackerId: attacker.id, skillId: skillId, timestamp: serverTimestamp() }
+            }, { merge: true });
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { ultimateUsed: true });
+            await delay(6500); // 컷신 대기
+        }
+
+        // [2] 도주(flee) 로직
+        if (skillId === 'flee') {
+            const agility = attacker.agility || 1;
+            const successChance = Math.min(100, agility * 10);
+            const roll = Math.floor(Math.random() * 100) + 1;
+            if (roll <= successChance) {
+                await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { x: null, y: null, hasActedThisRound: true });
+                await logAction(`🏃💨 **${attacker.name}**이(가) 탈출에 성공했습니다! (확률 ${successChance}%)`, "system");
+            } else {
+                await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { hasActedThisRound: true });
+                await logAction(`💦 **${attacker.name}**이(가) 도망치려 했지만 실패했습니다!`, "damage");
+            }
+            selectedCharacterId = null; selectedSkill = null; render();
+            return;
+        }
+
+        // [3] 나리 궁극기: 비굴한 구걸
+        else if (skillId === 'beg_for_life') {
+            const range = 1;
+            const damageToAllies = 15; 
+
+            for (const char of characters) {
+                if (char.id === attacker.id || char.x === null || char.hp <= 0 || char.type !== 'PC') continue;
+                const distX = Math.abs(char.x - attacker.x);
+                const distY = Math.abs(char.y - attacker.y);
+                
+                if (distX <= range && distY <= range) {
+                    const newHp = Math.max(0, char.hp - damageToAllies);
+                    await updateDoc(doc(db, 'games', gameId, 'characters', char.id), { hp: newHp });
+                    await triggerCombatText(char, `-${damageToAllies}`, "damage");
+                    await logAction(`😫 ${attacker.name}때문에 ${char.name}이(가) 피해를 입었습니다! (-${damageToAllies})`, "damage");
+                }
+            }
+            await logAction(`🙇 ${attacker.name}이(가) 무릎을 꿇고 구걸합니다. 적들이 이번 턴 동안 무시합니다.`, "system");
+            actionSucceeded = true;
+            affectedTargets.push(attacker); 
+        }
+
+        // [4] 이탈 관련 궁극기
+        else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
+            const hpPenalty = (skill.id === 'emergency_escape') ? 15 : 0; 
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), {
+                hp: Math.max(0, attacker.hp - hpPenalty), x: null, y: null, hasActedThisRound: true
+            });
+            await logAction(`🏃 ${attacker.name}이(가) 전장에서 이탈했습니다.`, "system");
+            actionSucceeded = true;
+        }
+
+        // [5] 일반 공격 및 기타 공격 로직 (수정된 포인트: else if로 정상 연결)
+        else if (skill.category === 'Attack' || skill.category === 'Ultimate' || skill.category === 'Defense') {
             const hitTile = async (tx, ty, damage) => {
                 const tileKey = `${tx},${ty}`;
                 const tile = boardTiles[tileKey];
                 
-                // 타일이 존재하고, '파괴 가능(destructible)' 타입인 경우
                 if (tile && tile.type === 'destructible') {
+                    const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
+                    if (livingEnemies.length > 0) {
+                        await logAction(`⚠️ 아직 살아있는 적이 있습니다! 모든 적을 처치해야 장애물을 공격할 수 있습니다.`, "system");
+                        return false; 
+                    }
                     const newHp = Math.max(0, tile.hp - damage);
-                    
                     if (newHp === 0) {
-                        // ★ [여기!] 파괴 이펙트 호출
                         triggerWallDestructionEffect(tx, ty);
-                        // HP 0 -> 파괴됨 -> 목록에서 삭제 (일반 칸으로 변함)
                         delete boardTiles[tileKey];
-                        await logAction(`🧱 (${tx}, ${ty}) 위치의 벽이 완전히 파괴되었습니다!`, "damage");
+                        await logAction(`🧱 (${tx}, ${ty}) 위치의 장애물이 완전히 파괴되었습니다!`, "damage");
                     } else {
-                        // HP 감소 -> 업데이트
                         tile.hp = newHp;
                         boardTiles[tileKey] = tile; 
-                        await logAction(`🧱 벽에 ${damage} 피해! (남은 HP: ${newHp})`, "damage");
+                        await logAction(`🧱 장애물에 ${damage} 피해! (남은 HP: ${newHp})`, "damage");
                     }
-                    tilesChanged = true; // 변경 사항 있음 표시
-                    return true; // 타격 성공
+                    tilesChanged = true;
+                    return true;
                 }
-                return false; // 타격 실패 (벽이 없음)
+                return false;
             };
 
-            // 기본 공격력 계산 (타일 타격용)
             let baseAttack = Math.floor(Math.random() * (attacker.maxAttack - attacker.minAttack + 1)) + attacker.minAttack;
-            // 타일에는 방어력 없이 순수 대미지를 줍니다 (필요시 조정 가능)
             const tileDamage = Math.max(1, Math.round(baseAttack * skill.multiplier));
 
-
             if (skill.isAoe) {
-                // === 광역 공격 ===
-                
-                // 1. 캐릭터 타격 (기존 로직)
                 const targetsInAoe = findTargetsInAoe(target.x, target.y, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
                 for (const aoeTarget of targetsInAoe) {
                     const success = await applyDamage(attacker, aoeTarget, skillId);
-                    if (success) {
-                        actionSucceeded = true;
-                        affectedTargets.push(aoeTarget);
-                    }
+                    if (success) { actionSucceeded = true; affectedTargets.push(aoeTarget); }
                 }
-                
-                // 2. ★ [추가] 범위 내 타일 타격
                 const range = skill.aoeRange;
-                const shape = skill.aoeShape || 'square';
-                const cx = target.x; // 타겟(중심) 좌표
-                const cy = target.y;
-
                 for (let dy = -range; dy <= range; dy++) {
                     for (let dx = -range; dx <= range; dx++) {
-                        let inShape = (shape === 'diamond' && Math.abs(dx) + Math.abs(dy) <= range) || 
-                                      (shape === 'square') || 
-                                      (shape === 'cross' && (dx === 0 || dy === 0));
-                        
-                        if (inShape) {
-                            const tx = cx + dx;
-                            const ty = cy + dy;
-                            // 해당 좌표에 있는 벽 타격 시도
-                            const tileHit = await hitTile(tx, ty, tileDamage);
-                            if (tileHit) actionSucceeded = true;
-                        }
+                        const tx = target.x + dx; const ty = target.y + dy;
+                        const tileHit = await hitTile(tx, ty, tileDamage);
+                        if (tileHit) actionSucceeded = true;
                     }
                 }
-
             } else {
-                // === 단일 공격 ===
-                
                 if (target.id) {
-                    // 1. 캐릭터를 직접 타겟팅한 경우
                     if (target.type === attacker.type) {
-                        await logAction(`⚠️ ${attacker.name}은(는) 아군에게 공격할 수 없습니다.`, "system");
+                        await logAction(`⚠️ 아군에게 공격할 수 없습니다.`, "system");
                         return;
                     }
                     const success = await applyDamage(attacker, target, skillId);
-                    if (success) {
-                        actionSucceeded = true;
-                        affectedTargets.push(target);
-                    }
+                    if (success) { actionSucceeded = true; affectedTargets.push(target); }
                 } else {
-                    // 2. ★ [추가] 빈 땅(좌표)을 클릭한 경우 -> 그 자리에 벽이 있는지 확인
                     const tileHit = await hitTile(target.x, target.y, tileDamage);
-                    if (tileHit) {
-                        actionSucceeded = true;
-                    } else {
-                        // 벽도 없고 캐릭터도 없으면 미스
-                        // await logAction(`허공을 공격했습니다.`, "system"); 
-                    }
+                    if (tileHit) actionSucceeded = true;
                 }
             }
+            if (tilesChanged) { await setDoc(doc(db, 'games', gameId, 'board', 'tiles'), { tiles: boardTiles }); }
+        }
 
-            // ★ [추가] 타일 정보가 변경되었으면 DB에 저장
-            if (tilesChanged) {
-                await setDoc(doc(db, 'games', gameId, 'board', 'tiles'), { tiles: boardTiles });
-            }
-
-        } else if (skill.category === 'Heal' || skill.category === 'Support') {
-            // (힐/서포트 로직은 기존 유지)
-             if (target.type && target.type !== attacker.type) {
-                await logAction(`⚠️ ${attacker.name}은(는) 적군에게 ${skill.name}을(를) 사용할 수 없습니다.`, "system");
+        // [6] 힐 및 서포트 로직
+        else if (skill.category === 'Heal' || skill.category === 'Support') {
+            if (target.type && target.type !== attacker.type) {
+                await logAction(`⚠️ 적군에게 사용할 수 없는 스킬입니다.`, "system");
                 return;
             }
             if(target.id) {
                 const success = await applyHealOrSupport(attacker, target, skillId);
-                if (success) {
-                    actionSucceeded = true;
-                    affectedTargets.push(target);
-                }
+                if (success) { actionSucceeded = true; affectedTargets.push(target); }
             }
-        } else {
+        } 
+        
+        // [7] 기타 예외 처리
+        else {
             actionSucceeded = true; 
+            if (target.id) affectedTargets.push(target);
         }
         
-        // [4] 상태 이상 효과 적용 (기존 유지)
+        // [8] 공통 상태 이상 효과 적용 (Stun 등)
         if (skill.appliesEffect && affectedTargets.length > 0) {
             for (const finalTarget of affectedTargets) {
                 await applyStatusEffect(finalTarget, skill.appliesEffect);
             }
         }
         
-        // [5] 행동 종료 처리 (기존 유지)
+        // [9] 행동 종료 및 갱신
         if (actionSucceeded) {
             const isGameOver = await checkGameEndCondition();
             if (isGameOver) return;
-
-            if (attacker.type === 'PC' && roundPhase === 'PLAYER_PHASE') {
-                await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { hasActedThisRound: true });
-                selectedCharacterId = null;
-                selectedSkill = null;
-                render();
-            }
-
-            if (attacker.type === 'ENEMY' && roundPhase === 'ENEMY_EXECUTION') {
-                await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { nextAction: null });
-                selectedCharacterId = null;
-                selectedSkill = null;
-                render();
-            }
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { hasActedThisRound: true });
+            selectedCharacterId = null; selectedSkill = null; render();
         } else {
             render(); 
         }
@@ -3460,26 +3532,26 @@ async function handleLogout() {
         
         if (!char || char.x === null || !SKILLS[skillId]) return;
 
-    // skill과 isMove를 여기서 한 번만 선언합니다.
-    const skill = SKILLS[skillId];
-    const isMove = skill.id === 'move';
+        // skill과 isMove를 여기서 한 번만 선언합니다.
+        const skill = SKILLS[skillId];
+        const isMove = skill.id === 'move';
 
-    // 속박 상태를 체크합니다.
-    if (isMove && char.statusEffects?.some(e => e.id === 'rooted')) {
-        return; 
-    }
+        // 속박 상태를 체크합니다.
+        if (isMove && char.statusEffects?.some(e => e.id === 'rooted')) {
+            return; 
+        }
 
-    const range = (skill.id === 'move' && char.moveRange !== undefined) ? char.moveRange : skill.range;
-    const size = char.size || 1;
-    
-// highlightRange 함수 내부 수정
-const isAttack = (skill.category === 'Attack' || skill.category === 'Ultimate'); // Ultimate 추가
-const isHealOrSupport = (skill.category === 'Heal' || skill.category === 'Support');
-    
-    const shape = skill.rangeShape || 'diamond';
+        const range = (skill.id === 'move' && char.moveRange !== undefined) ? char.moveRange : skill.range;
+        const size = char.size || 1;
+        
+        const isAttack = (skill.category === 'Attack' || skill.category === 'Ultimate');
+        const isHealOrSupport = (skill.category === 'Heal' || skill.category === 'Support');
+        
+        const shape = skill.rangeShape || 'diamond';
         const validCells = new Set();
 
         if (isMove) {
+            // [이동 범위 계산]
             const originX = char.x;
             const originY = char.y;
             for (let dy = -range; dy <= range; dy++) {
@@ -3494,10 +3566,8 @@ const isHealOrSupport = (skill.category === 'Heal' || skill.category === 'Suppor
                     }
                 }
             }
-            
-
-        } else if (isAttack || isHealOrSupport) {
-             // Action range (기존 로직과 동일)
+        } else {
+             // [스킬 범위 계산] (공격, 힐, 회피, 도주 등 모든 스킬)
             for (let ex = 0; ex < size; ex++) {
                 for (let ey = 0; ey < size; ey++) {
                     const originX = char.x + ex, originY = char.y + ey;
@@ -3516,7 +3586,9 @@ const isHealOrSupport = (skill.category === 'Heal' || skill.category === 'Suppor
                     }
                 }
             }
-            if (!skill.isAoe) {
+            // [수정] 광역이 아니고 사거리가 0보다 클 때만 자기 자신 위치를 제외함
+            // (사거리 0인 회피/도주는 자기 자신을 클릭해야 하므로 제외하면 안 됨 -> 즉, 여기서 제외 안 됨)
+            if (!skill.isAoe && range > 0) {
                 for (let ex = 0; ex < size; ex++) {
                     for (let ey = 0; ey < size; ey++) {
                         validCells.delete(`${char.x + ex},${char.y + ey}`);
@@ -4370,8 +4442,8 @@ function renderLoginStatus() {
                         <div class="grid grid-cols-3 gap-4">
                             <div><label class="text-gray-400">HP</label><input id="edit-hp" type="number" class="form-input mt-1" value="${character.hp}"></div><div><label class="text-gray-400">최대 HP</label><input id="edit-max-hp" type="number" class="form-input mt-1" value="${character.maxHp}"></div>
                             <div><label class="text-gray-400">최소 공격력</label><input id="edit-min-attack" type="number" class="form-input mt-1" value="${character.minAttack}"></div><div><label class="text-gray-400">최대 공격력</label><input id="edit-max-attack" type="number" class="form-input mt-1" value="${character.maxAttack}"></div>
-                            <div><label class="text-gray-400">최소 방어력</label><input id="edit-min-defense" type="number" class="form-input mt-1" value="${character.minDefense}"></div><div><label class="text-gray-400">최대 방어력</label><input id="edit-max-defense" type="number" class="form-input mt-1" value="${character.maxDefense}"></div>
                             <div><label class="text-gray-400">고유 추가 데미지</label><input id="edit-bonus-damage" type="number" class="form-input mt-1" value="${character.bonusDamage || 0}"></div>
+                            <div><label class="text-gray-400">민첩 (회피/도주 확률)</label><input id="edit-agility" type="number" class="form-input mt-1" value="${character.agility || 10}"></div>
                             <div><label class="text-gray-400">크기 (예: 1, 2)</label><input id="edit-size" type="number" class="form-input mt-1" value="${character.size || 1}"></div>
                         </div>
                         <div class="flex items-center gap-2 pt-4 border-t border-gray-700/50">
@@ -4458,7 +4530,11 @@ function renderLoginStatus() {
                         <p class="profile-char-type">${character.type}</p>
                         <div class="profile-stats-grid">
                             ${buildStat('hp', '생명력', `${character.hp} / ${character.maxHp}`)}
+                            ${buildStat('attack', '공격력', `+${character.bonusDamage || 0}`)}
+                            ${buildStat('move', '민첩', `${character.agility || 10}`)}
                             ${buildStat('move', '이동력', `${effectiveMoveRange} 칸`)}
+                            
+                            
                         </div>
                     </div>
                     <div class="mt-6">
@@ -5254,6 +5330,7 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
                 <div class="relative"><input id="new-char-max-attack" type="number" placeholder=" " class="form-input peer" value="20"><label for="new-char-max-attack" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최대 공격력</label></div>
                 <div class="relative"><input id="new-char-min-defense" type="number" placeholder=" " class="form-input peer" value="3"><label for="new-char-min-defense" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최소 방어력</label></div>
                 <div class="relative"><input id="new-char-max-defense" type="number" placeholder=" " class="form-input peer" value="7"><label for="new-char-max-defense" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">최대 방어력</label></div>
+                <div class="relative"><input id="new-char-agility" type="number" placeholder=" " class="form-input peer" value="10"><label for="new-char-agility" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">민첩 (Agility)</label></div>
                 <div class="relative"><input id="new-char-size" type="number" placeholder=" " class="form-input peer" value="1"><label for="new-char-size" class="absolute left-3 -top-2 text-gray-400 text-xs transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-1/2 peer-focus:-top-2 peer-focus:text-xs">크기 (1x1, 2x2...)</label></div>
                 <input id="new-char-skills" placeholder="스킬 ID (e.g. slash,shoot)" class="form-input">
             </div>
@@ -5469,15 +5546,25 @@ async function handleCombatClick(e) {
                 return;
 
             } else if (selectedCharActionPhase === 'ACTION') {
-                if (clickedChar && clickedChar.id === selectedCharacter.id) {
+                const skill = SKILLS[selectedSkill]; // ★ 중요: 스킬 정보를 가장 먼저 가져옵니다.
+
+                // [수정] 자기 자신을 클릭했을 때:
+                // 스킬이 있고 사거리가 0보다 크면 -> '이동 취소' (잘못 누른 것으로 판단)
+                // 스킬이 있고 사거리가 0이면 (회피/도주) -> '취소 안 함' (자신에게 스킬 사용 시도)
+                if (clickedChar && clickedChar.id === selectedCharacter.id && skill && skill.range > 0) {
                     undoMove();
                     return;
                 }
-                const skill = SKILLS[selectedSkill];
+                
+                // 클릭한 곳이 스킬 범위(combat-range) 안이라면 스킬 실행
                 if (skill && cell.classList.contains('combat-range')) {
-                    await executeSkill(selectedCharacter, (skill.isAoe || !clickedChar ? { x: cellX, y: cellY } : clickedChar), selectedSkill);
+                    // 광역 스킬이거나 대상을 클릭하지 않은 경우(빈 땅 클릭)에는 좌표를 넘김
+                    const target = (skill.isAoe || !clickedChar) ? { x: cellX, y: cellY } : clickedChar;
+                    await executeSkill(selectedCharacter, target, selectedSkill);
                     return;
                 }
+                
+                // 그 외 엉뚱한 곳을 클릭하면 취소
                 undoMove();
                 selectedCharacterId = null;
                 selectedSkill = null;
@@ -5889,7 +5976,15 @@ function renderChats(chats) {
     const chatList = document.getElementById('chat-list');
     chatList.innerHTML = chats.map(chat => {
         const time = chat.timestamp ? chat.timestamp.toDate().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : '';
-        return `<li><span class="text-gray-500 text-[10px]">[${time}]</span> <span class="chat-name">${chat.sender}:</span> <span>${chat.message}</span></li>`;
+        // ▼▼▼ [수정] 보낸 사람이 '관리자'면 빨간색(#ff0000) 스타일 적용 ▼▼▼
+        const isAdminChat = chat.sender === '관리자';
+        const style = isAdminChat ? 'style="color: #ff0000; font-weight: bold;"' : ''; // 굵게 표시도 추가했습니다 (원치 않으시면 font-weight 삭제하세요)
+
+        return `<li>
+            <span class="text-gray-500 text-[10px]">[${time}]</span> 
+            <span class="chat-name" ${style}>${chat.sender}:</span> 
+            <span ${style}>${chat.message}</span>
+        </li>`;    
     }).join('');
     chatList.scrollTop = chatList.scrollHeight; // 새 메시지 시 하단 스크롤
 }
