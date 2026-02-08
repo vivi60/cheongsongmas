@@ -3379,7 +3379,8 @@ function triggerWallDestructionEffect(x, y) {
 
             let baseAttack = Math.floor(Math.random() * 10) + 1;
            const charBonus = (attacker.bonusDamage !== undefined) ? attacker.bonusDamage : 5;
-            const tileDamage = Math.max(1, Math.round((baseAttack + charBonus * 2) * skill.multiplier));
+            const effectiveMultiplier = skill.multiplier > 0 ? skill.multiplier : 1;
+        const tileDamage = Math.max(1, Math.round((baseAttack + charBonus * 2) * effectiveMultiplier));
 
             if (skill.isAoe) {
                 const targetsInAoe = findTargetsInAoe(target.x, target.y, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
