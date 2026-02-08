@@ -4549,6 +4549,7 @@ function renderLoginStatus() {
             </div>`;
             
             document.getElementById('save-changes-btn').onclick = async () => {
+                // [수정] 존재하지 않는 방어력(defense) 관련 getElementById 호출을 제거했습니다.
                 const updates = { 
                     name: document.getElementById('edit-name').value, 
                     imageUrl: document.getElementById('edit-image-url').value.trim(), 
@@ -4556,10 +4557,9 @@ function renderLoginStatus() {
                     maxHp: parseInt(document.getElementById('edit-max-hp').value), 
                     minAttack: parseInt(document.getElementById('edit-min-attack').value),
                     maxAttack: parseInt(document.getElementById('edit-max-attack').value),
-                    minDefense: parseInt(document.getElementById('edit-min-defense').value),
-                    maxDefense: parseInt(document.getElementById('edit-max-defense').value),
                     size: parseInt(document.getElementById('edit-size').value) || 1,
                     bonusDamage: parseInt(document.getElementById('edit-bonus-damage').value) || 0,
+                    agility: parseInt(document.getElementById('edit-agility').value) || 10, // 민첩 추가
                     ultImage: document.getElementById('edit-ult-image').value.trim(),
                     skills: [
                         document.getElementById('edit-skill-1').value, 
@@ -4569,16 +4569,31 @@ function renderLoginStatus() {
                         document.getElementById('edit-skill-5').value
                     ].filter(s => s && s !== 'none') 
                 };
-                if (character.type === 'PC') updates.password = document.getElementById('edit-password').value;
-                // NEW: Update 'move' skill range for this specific character if changed.
-                if (character.skills.includes('move')) {
-                    const newMoveRange = parseInt(document.getElementById('edit-move-range').value) || 1;
-                    updates.moveRange = newMoveRange;
+
+                if (character.type === 'PC') {
+                    updates.password = document.getElementById('edit-password').value;
+                }
+
+                // 이동력(moveRange) 업데이트 (move 스킬이 있을 때만)
+                const moveRangeInput = document.getElementById('edit-move-range');
+                if (moveRangeInput) {
+                    updates.moveRange = parseInt(moveRangeInput.value) || 1;
                 }
                 
-                if (gameId) await updateDoc(doc(db, 'games', gameId, 'characters', character.id), updates);
-                openProfileModal({...character, ...updates}, false);
+                if (gameId) {
+                    try {
+                        await updateDoc(doc(db, 'games', gameId, 'characters', character.id), updates);
+                        await logAction(`📝 관리자가 ${updates.name}의 정보를 수정했습니다.`, "admin");
+                        // 수정 성공 후 프로필 모드(상세 보기)로 전환
+                        openProfileModal({...character, ...updates}, false);
+                    } catch (error) {
+                        console.error("캐릭터 수정 실패:", error);
+                        showCustomModal("오류", "데이터를 저장하는 중 문제가 발생했습니다.", [{text:"확인", class:"bg-red-600"}]);
+                    }
+                }
             };
+
+
             document.getElementById('cancel-edit-btn').onclick = () => openProfileModal(character, false);
           } else {
         const statIcon = (type) => ({
