@@ -1359,6 +1359,7 @@
         </button>
     </div>
     
+    
      
     <div class="w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
          
@@ -1421,6 +1422,13 @@
 
          
         <div class="lg:w-2/4 w-full flex items-center justify-center relative">
+            <div id="turn-timer-container" class="absolute z-[40] hidden" style="top: -60px; left: 50%; transform: translateX(-50%);">
+    <div class="bg-black/70 backdrop-blur-md border-2 border-red-500 px-6 py-2 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.4)] flex items-center gap-3">
+        <span class="text-red-500 animate-pulse text-xl">⏳</span>
+        <span id="turn-timer-display" class="text-2xl font-bold font-title text-white tracking-widest">05:00</span>
+    </div>
+</div>
+
     <div id="game-board" class="shadow-inner"></div>
     <svg id="foreshadow-layer" class="absolute top-0 left-0 w-full h-full pointer-events-none z-30"></svg>
 </div>
@@ -1856,6 +1864,46 @@ const loginStatusModal = document.getElementById('login-status-modal');
     }
 }
     
+
+// 타이머 관련 변수
+let turnTimerInterval = null;
+let remainingTime = 300; // 5분 (300초)
+
+function startTurnTimer() {
+    stopTurnTimer(); // 기존 타이머 초기화
+    remainingTime = 300;
+    const display = document.getElementById('turn-timer-display');
+    const container = document.getElementById('turn-timer-container');
+    
+    container.classList.remove('hidden');
+    
+    turnTimerInterval = setInterval(async () => {
+        remainingTime--;
+        
+        // 시간 표시 업데이트 (MM:SS)
+        const mins = Math.floor(remainingTime / 60);
+        const secs = remainingTime % 60;
+        display.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        // 시간 종료 시 처리
+        if (remainingTime <= 0) {
+            stopTurnTimer();
+            if (isAdmin) {
+                await logAction("⏰ 시간이 초과되었습니다! 아군 턴이 강제로 종료됩니다.", "system");
+                await advanceRoundPhase(); // 적군 턴으로 강제 전환
+            }
+        }
+    }, 1000);
+}
+
+function stopTurnTimer() {
+    if (turnTimerInterval) {
+        clearInterval(turnTimerInterval);
+        turnTimerInterval = null;
+    }
+    document.getElementById('turn-timer-container').classList.add('hidden');
+}
+
     // --- Data Listeners ---
     function listenForGameData(gameId) {
     if (unsubscribeSettings) unsubscribeSettings();
@@ -1929,6 +1977,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 switch (roundPhase) {
                     case 'ENEMY_FORESHADOW':
                         showBannerAnnouncement(`Round ${round}`, "적 행동 예고");
+                        stopTurnTimer(); // 🕒 타이머 중지
                         if (isAdmin) {
                             determineEnemyNextActions();
                         }
@@ -1936,6 +1985,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
                     
                     case 'PLAYER_PHASE': { 
                         showBannerAnnouncement(`Round ${round}`, "아군 턴 시작");
+                        startTurnTimer(); // 🕒 타이머 시작
                         if (isAdmin) {
                             const livingPCs = characters.filter(c => c.type === 'PC' && c.hp > 0 && c.x !== null);
                             if (livingPCs.length > 0) {
@@ -1992,6 +2042,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
                     
                     case 'ENEMY_EXECUTION': { 
                         showBannerAnnouncement(`Round ${round}`, "적군 턴 시작");
+                        stopTurnTimer(); // 🕒 타이머 중지
                         if (isAdmin) {
                             const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
                             if (livingEnemies.length > 0) {
@@ -2131,41 +2182,35 @@ function listenForCombatTextEvents(gameId) {
     
     
     async function advanceRoundPhase() {
-        if (!gameId) return;
-
-        // [중요] 모든 단계 전환 및 데이터 수정 로직을 isAdmin(관리자)만 수행하도록 감쌉니다.
-        if (!isAdmin) return; 
+        if (!gameId || !isAdmin) return; // 관리자만 턴을 넘길 수 있음
 
         if (roundPhase === 'PLAYER_PHASE') {
+            // 아군 턴 종료 -> 적군 실행 단계로 변경
+            stopTurnTimer(); // 아군 턴 종료 시 즉시 타이머 정지
             await setDoc(doc(db, 'games', gameId), { roundPhase: 'ENEMY_EXECUTION' }, { merge: true });
         } 
         else if (roundPhase === 'ENEMY_EXECUTION') {
-            currentlyActingEnemyId = null; 
+            // [중요] 살아있는 적 중 행동하지 않은 적이 있는지 최종 체크
+            const unactedEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null && !c.hasActedThisRound);
             
+            if (unactedEnemies.length > 0) {
+                const confirmForce = confirm("아직 행동하지 않은 적이 있습니다. 강제로 다음 라운드로 넘기시겠습니까?");
+                if (!confirmForce) return;
+            }
+
+            currentlyActingEnemyId = null; 
             const endOfRoundBatch = writeBatch(db);
 
-            // 관리자 브라우저에 있는 현재 캐릭터 목록을 기준으로 턴 계산
             characters.forEach(char => {
-                let updates = {
-                    hasActedThisRound: false,
-                    nextAction: null
-                };
-
-                // 상태 효과가 있을 때만 처리
+                let updates = { hasActedThisRound: false, nextAction: null };
+                
+                // 상태 효과 턴 감소 및 스턴 체크
                 if (char.statusEffects && char.statusEffects.length > 0) {
                     const updatedEffects = char.statusEffects
                         .map(effect => ({ ...effect, turns: effect.turns - 1 }))
                         .filter(effect => effect.turns > 0);
-                    
                     updates.statusEffects = updatedEffects;
-
-                    // 스턴이 남았다면 다음 라운드도 행동 완료 처리
-                    if (updatedEffects.some(e => e.id === 'stunned')) {
-                        updates.hasActedThisRound = true;
-                    }
-                } else {
-                    // 효과가 없는 캐릭터도 명시적으로 빈 배열로 업데이트하여 중복 방지
-                    updates.statusEffects = [];
+                    if (updatedEffects.some(e => e.id === 'stunned')) updates.hasActedThisRound = true;
                 }
 
                 const charRef = doc(db, 'games', gameId, 'characters', char.id);
@@ -2173,7 +2218,7 @@ function listenForCombatTextEvents(gameId) {
             });
 
             const newRound = round + 1;
-            
+
             // 최대 라운드 체크
             if (maxRounds > 0 && newRound > maxRounds) {
                 await endOfRoundBatch.commit();
@@ -2186,10 +2231,7 @@ function listenForCombatTextEvents(gameId) {
                 return; 
             }
 
-            // 모든 변경 사항을 한 번의 배치로 커밋 (가장 안전)
             await endOfRoundBatch.commit();
-
-            // 라운드 수와 페이즈 업데이트
             await setDoc(doc(db, 'games', gameId), { 
                 round: newRound,
                 roundPhase: 'ENEMY_FORESHADOW' 
@@ -2198,6 +2240,15 @@ function listenForCombatTextEvents(gameId) {
             render(); 
         }
     }
+
+
+
+
+
+    
+
+
+
 
 // [추가] 캐릭터의 특정 스탯을 영구적으로 변경하는 함수
 async function updateStatPermanently(charId, statName, amount) {
@@ -2955,7 +3006,7 @@ function isAttackPossible(attacker, target, attackRange) {
         }
 
         // 1. 기본 공격력 계산 (주사위 굴리기)
-        let baseAttack = Math.floor(Math.random() * (attacker.maxAttack - attacker.minAttack + 1)) + attacker.minAttack;
+        let baseAttack = Math.floor(Math.random() * 10) + 1;
         let attackBonus = 0;
 
         // ... (상태 이상 버프/디버프 계산 부분은 그대로 둠) ...
@@ -2972,13 +3023,14 @@ function isAttackPossible(attacker, target, attackRange) {
         // ▼▼▼ [여기서부터 수정된 코드입니다!] ▼▼▼
         
         // 캐릭터 고유 추가 데미지 (bonusDamage) 가져오기 (없으면 0)
-        const charBonus = attacker.bonusDamage || 0; 
+        const charBonus = (attacker.bonusDamage !== undefined) ? attacker.bonusDamage : 5;
         
         // 최종 데미지 = (랜덤 공격력) + (캐릭터 고유 추가뎀) + (스킬 추가뎀)
         // 방어력(- finalDefense)은 제거되었습니다.
-        const finalDamage = Math.max(1, Math.round(finalAttack + charBonus));
+       const finalDamage = Math.max(1, Math.round(finalAttack + (charBonus * 2)));
 
         // ▲▲▲ [여기까지가 수정된 코드입니다!] ▲▲▲
+        console.log(`공격자: ${attacker.name}, 주사위: ${baseAttack}, 공격스탯: ${charBonus}, 최종데미지: ${finalDamage}`);
 
         const newHp = await updateHP(defender, -finalDamage, "damage");
             await triggerCombatText(defender, `-${finalDamage.toFixed(0)}`, 'damage');
@@ -3155,15 +3207,20 @@ async function applyStatusEffect(target, effectInfo) {
             gameResult = { title: "승리!", message: "모든 적과 장애물을 파괴했습니다!" };
         }
 
+        // 바로 이 부분에 넣어주세요!
         if (gameResult) {
+            stopTurnTimer(); // 🕒 게임이 끝났으므로 타이머 정지
             await setDoc(doc(db, 'games', gameId), { 
                 gameState: 'ENDED',
                 gameResult: gameResult 
             }, { merge: true });
+            
+            // 결과 모달 표시 (기존 함수 호출)
+            showGameSummaryModal(gameResult.title, gameResult.message);
             return true; 
         }
 
-        return false; 
+        return false;
     }
 
 // [추가] 벽 파괴 이펙트 (파편 + 흔들림)
@@ -3292,7 +3349,7 @@ function triggerWallDestructionEffect(x, y) {
             actionSucceeded = true;
         }
 
-        // [5] 일반 공격 및 기타 공격 로직 (수정된 포인트: else if로 정상 연결)
+        // [5] 일반 공격 및 기타 공격 로직
         else if (skill.category === 'Attack' || skill.category === 'Ultimate' || skill.category === 'Defense') {
             const hitTile = async (tx, ty, damage) => {
                 const tileKey = `${tx},${ty}`;
@@ -3320,8 +3377,9 @@ function triggerWallDestructionEffect(x, y) {
                 return false;
             };
 
-            let baseAttack = Math.floor(Math.random() * (attacker.maxAttack - attacker.minAttack + 1)) + attacker.minAttack;
-            const tileDamage = Math.max(1, Math.round(baseAttack * skill.multiplier));
+            let baseAttack = Math.floor(Math.random() * 10) + 1;
+           const charBonus = (attacker.bonusDamage !== undefined) ? attacker.bonusDamage : 5;
+            const tileDamage = Math.max(1, Math.round((baseAttack + charBonus * 2) * skill.multiplier));
 
             if (skill.isAoe) {
                 const targetsInAoe = findTargetsInAoe(target.x, target.y, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
@@ -3338,19 +3396,42 @@ function triggerWallDestructionEffect(x, y) {
                     }
                 }
             } else {
+                // --- 단일 타겟 처리 (수정된 부분) ---
                 if (target.id) {
-                    if (target.type === attacker.type) {
+                    // 공격 카테고리이면서 아군을 찍었을 때만 차단
+                    if (skill.category === 'Attack' && target.type === attacker.type) {
                         await logAction(`⚠️ 아군에게 공격할 수 없습니다.`, "system");
                         return;
                     }
-                    const success = await applyDamage(attacker, target, skillId);
-                    if (success) { actionSucceeded = true; affectedTargets.push(target); }
+                    
+                    if (skill.category === 'Attack') {
+                        const success = await applyDamage(attacker, target, skillId);
+                        if (success) { actionSucceeded = true; affectedTargets.push(target); }
+                    } else {
+                        // 회피, 도주, 방어 등은 아군(자신) 타겟팅 허용
+                        actionSucceeded = true;
+                        affectedTargets.push(target);
+                    }
                 } else {
                     const tileHit = await hitTile(target.x, target.y, tileDamage);
                     if (tileHit) actionSucceeded = true;
                 }
+                // ----------------------------------
             }
             if (tilesChanged) { await setDoc(doc(db, 'games', gameId, 'board', 'tiles'), { tiles: boardTiles }); }
+        }
+            
+
+        // [6] 힐 및 서포트 로직
+        else if (skill.category === 'Heal' || skill.category === 'Support') {
+            if (target.type && target.type !== attacker.type) {
+                await logAction(`⚠️ 적군에게 사용할 수 없는 스킬입니다.`, "system");
+                return;
+            }
+            if(target.id) {
+                const success = await applyHealOrSupport(attacker, target, skillId);
+                if (success) { actionSucceeded = true; affectedTargets.push(target); }
+            }
         }
 
         // [6] 힐 및 서포트 로직
@@ -3389,6 +3470,7 @@ function triggerWallDestructionEffect(x, y) {
         }
     }
 
+    
     async function undoMove() {
     const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
     
