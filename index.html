@@ -1663,7 +1663,29 @@ const combatTextStartTime = new Date();
             category: 'Attack'         // 공격 카테고리
         },
 
-
+        'sweep': { 
+            id: 'sweep', 
+            name: '휩쓸기', 
+            type: 'Melee', 
+            range: 0, 
+            rangeShape: 'square', 
+            multiplier: 1.0, 
+            icon: '🌪️', 
+            category: 'Attack',
+            isAoe: true,
+            aoeRange: 1,
+            aoeShape: 'square'
+        },
+        'people_attack': { 
+            id: 'people_attack',        // 고유 ID
+            name: '공격',           // 화면에 보일 이름
+            type: 'Melee',             // 근거리 공격 (원거리로 하려면 'Ranged'로 변경)
+            range: 1,                  // 사거리 1칸
+            rangeShape: 'square',     // 마름모 모양 범위
+            multiplier: 0,             // ★ 핵심: 스킬 자체 추가 데미지는 0
+            icon: '⚡︎',                // 주먹 아이콘
+            category: 'Attack'         // 공격 카테고리
+        },
 
         'beg_for_life': {
     name: '비굴한 구걸',
@@ -1792,28 +1814,26 @@ const loginStatusModal = document.getElementById('login-status-modal');
         const batch = writeBatch(db);
         const pcData = [ 
                 
-                { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee','beg_for_life'], order: 1 },
-                { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a0ad5a15-1a27-4fcf-950a-47d66c54c960", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "강초아", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=4e3f5fc8-c06a-4afb-bb2c-60dbad76fa67", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a9e550da-0ff1-4456-bbab-0fa5e875a2a7", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 3, agility: 7,  skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=729bd3ba-0e4f-4ebe-9d03-dc741c03ed11", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "매튜 백", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%86%E1%85%A2%E1%84%90%E1%85%B2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d5f5c4f1-7b74-463b-9232-eea35d141985", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=723259a0-b65b-4f5e-9355-b0b5f107fc03", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=558a2f3e-6dc6-4594-88b7-e8a013aa5c59", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d31747b1-0b64-4d49-9f06-d792c8d2ba95", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c65bb78e-a90b-4e5b-8ceb-c431f9781fd0", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=a51252e9-b0b5-481c-8fa2-b2193f63703a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "이기조", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%80%E1%85%B5%E1%84%8C%E1%85%A9_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=3afe12b7-a49b-42ed-b23c-81a21cb66049", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=8d1c94f4-c33d-49a9-9456-6fdd3b115b2a", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=672b3c7f-8e8c-4413-a80e-d71d9470fb10", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=d9e3f806-066e-4238-a8d5-75225712593b", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2b7a9b21-bddd-4b53-93e9-fbd3f490e5a9", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "정해찬", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8C%E1%85%A5%E1%86%BC%E1%84%92%E1%85%A2%E1%84%8E%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=aa7076b1-18d2-486c-8865-48d4436dc42c", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 9, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2503afd9-ce89-40d2-b3aa-9200b5135457", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=392200b4-afa5-44c0-9160-c9f3782de216", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "한바다", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=4f43f8d4-1813-441f-94bc-38a223aa21ee", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=39f6416d-430d-44ab-8ca8-1c9d68b0fabf", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "민현우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC%20(2).png?alt=media&token=80fe87f0-7afb-400b-9134-6fd583085cfc", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%92%E1%85%AC%E1%84%80%E1%85%B1%E1%84%92%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2c827152-46c8-48be-a7d3-dbb0bfd07aee", ultImage: "", type: 'PC', size: 1, bonusDamage: 8, moveRange: 3, agility: 6,  skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=44657bc5-b2cd-43dc-822b-0fdf4c935b3a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "백건우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%80%E1%85%A5%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=700d37d9-217f-4a82-9722-a2deec58abfb", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=eb88eacb-2af5-48ef-b240-97464a6582c0", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7f4bcf1f-b3be-4231-9d05-0fff868ee453", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC2.png?alt=media&token=95dba849-4c66-4044-b0b2-e0bf9defcd19", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=f128f6f3-5386-4295-8fc3-999da5636973", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=920de26c-c450-49bc-be20-95092212a626", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC(%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF)_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=11d85fb7-c8c7-4edc-98ed-3d51c5fc270f", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=e39bab6c-6064-4cfc-8498-7090c5f81033", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC_%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF.png?alt=media&token=f2168d25-9377-43d6-9a60-1d6f0f61bde8", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_2%E1%84%8E%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c986c48f-11b7-4ce5-8ed5-cc096044c8ed", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=bc725a00-316b-435c-b9e5-e09e61a8f816", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=6c33dfc8-37f6-46c8-aab1-8f1ceab8df42", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "한바다", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=48917438-652f-4d42-b0bd-a5771fafcdf2", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 1, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 
             
             
@@ -1835,6 +1855,17 @@ const loginStatusModal = document.getElementById('login-status-modal');
             { name: "좀비13", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
             { name: "좀비14", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
             { name: "좀비15", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "엑스트라1", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라2", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라3", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라4", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라5", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라6", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라7", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라8", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라9", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라10", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+        
         ];
         [...pcData, ...enemyData].forEach(char => {
             const charPassword = char.type === 'PC' ? DEFAULT_PC_PASSWORD : ''; 
@@ -2403,7 +2434,9 @@ async function executeSingleEnemyAction(enemyId) {
     if (target && target.hp > 0 && skill) {
         let bestMovePos = { x: enemy.x, y: enemy.y };
         const moveRange = enemy.moveRange || SKILLS['move']?.range || 1;
-        const attackRange = skill.range;
+        
+        // ★ [수정] 여기도 똑같이 적용
+        const attackRange = (skill.range === 0 && skill.isAoe) ? skill.aoeRange : skill.range;
         
         if (getDistance(enemy, target) > attackRange) {
             let minMoveDistance = Infinity;
@@ -2471,7 +2504,8 @@ async function executeSingleEnemyAction(enemyId) {
 
         let bestMovePos = { x: enemy.x, y: enemy.y };
         const moveRange = enemy.moveRange !== undefined ? enemy.moveRange : (SKILLS['move']?.range || 1);
-        const attackRange = skill.range;
+        // ★ [수정] 사거리 0인 광역 스킬은 '광역 범위(aoeRange)'를 공격 가능 거리로 계산합니다!
+        const attackRange = (skill.range === 0 && skill.isAoe) ? skill.aoeRange : skill.range;
 
         const phantomEnemy = { ...enemy };
         if (!isAttackPossible(phantomEnemy, target, attackRange)) {
@@ -3383,17 +3417,22 @@ function triggerWallDestructionEffect(x, y) {
         const tileDamage = Math.max(1, Math.round((baseAttack + charBonus * 2) * effectiveMultiplier));
 
             if (skill.isAoe) {
-                const targetsInAoe = findTargetsInAoe(target.x, target.y, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
+                // ★ [수정] 사거리 0인 기술은 누구를 타겟으로 하든 '시전자 본인'을 중심으로 폭발!
+                const centerX = skill.range === 0 ? attacker.x : target.x;
+                const centerY = skill.range === 0 ? attacker.y : target.y;
+
+                actionSucceeded = true; // 무조건 시전 성공 처리
+
+                const targetsInAoe = findTargetsInAoe(centerX, centerY, skill.aoeRange, skill.aoeShape, skill.type, attacker.type);
                 for (const aoeTarget of targetsInAoe) {
                     const success = await applyDamage(attacker, aoeTarget, skillId);
-                    if (success) { actionSucceeded = true; affectedTargets.push(aoeTarget); }
+                    if (success) { affectedTargets.push(aoeTarget); }
                 }
                 const range = skill.aoeRange;
                 for (let dy = -range; dy <= range; dy++) {
                     for (let dx = -range; dx <= range; dx++) {
-                        const tx = target.x + dx; const ty = target.y + dy;
-                        const tileHit = await hitTile(tx, ty, tileDamage);
-                        if (tileHit) actionSucceeded = true;
+                        const tx = centerX + dx; const ty = centerY + dy;
+                        await hitTile(tx, ty, tileDamage);
                     }
                 }
             } else {
