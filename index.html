@@ -2028,13 +2028,7 @@ function stopTurnTimer() {
                                     let updates = {};
 
                                     // 대미지 타일 체크
-                                    const tileKey = `${pc.x},${pc.y}`;
-                                    const tile = boardTiles[tileKey];
-                                    if (tile && tile.type === 'damage') {
-                                        const damage = DAMAGE_TILE_DAMAGE;
-                                        updates.hp = Math.max(0, (updates.hp !== undefined ? updates.hp : pc.hp) - damage);
-                                        logAction(`🩸 ${pc.name}이(가) 대미지 칸에 서있어 **${damage} 피해**를 입었습니다!`, "damage");
-                                    }
+                                   
                                     const effects = pc.statusEffects || [];
                                     if (effects.length > 0) {
                                         const isStunned = effects.some(effect => effect.id === 'stunned');
@@ -2082,13 +2076,7 @@ function stopTurnTimer() {
                                     const charRef = doc(db, 'games', gameId, 'characters', enemy.id);
                                     let updates = {};
                                     
-                                    const tileKey = `${enemy.x},${enemy.y}`;
-                const tile = boardTiles[tileKey];
-                if (tile && tile.type === 'damage') {
-                    const damage = DAMAGE_TILE_DAMAGE;
-                    updates.hp = Math.max(0, enemy.hp - damage);
-                    logAction(`🩸 ${enemy.name}이(가) 대미지 칸에 서있어 **${damage} 피해**를 입었습니다!`, "damage");
-                }
+                                    
                                     const effects = enemy.statusEffects || [];
                                     if (effects.length > 0) {
                                         let finalHp = enemy.hp;
@@ -2461,6 +2449,8 @@ async function executeSingleEnemyAction(enemyId) {
         if (bestMovePos.x !== enemy.x || bestMovePos.y !== enemy.y) {
             await logAction(`🏃 ${enemy.name}이(가) 이동합니다.`, "move");
             await updateDoc(doc(db, 'games', gameId, 'characters', enemy.id), { x: bestMovePos.x, y: bestMovePos.y });
+            // ⬇️ 추가
+            await checkAndApplyTileDamage({ ...enemy, x: bestMovePos.x, y: bestMovePos.y });
             await delay(1000);
         }
 
@@ -2563,6 +2553,8 @@ async function executeSingleEnemyAction(enemyId) {
         if (bestMovePos.x !== enemy.x || bestMovePos.y !== enemy.y) {
             await logAction(`🏃 ${enemy.name}이(가) 이동합니다.`, "move");
             await updateDoc(doc(db, 'games', gameId, 'characters', enemy.id), { x: bestMovePos.x, y: bestMovePos.y });
+            // ⬇️ 추가
+            await checkAndApplyTileDamage({ ...enemy, x: bestMovePos.x, y: bestMovePos.y });
             await delay(1000);
         }
 
@@ -2710,6 +2702,8 @@ function renderForeshadowing() {
             let message = `🩸 ${char.name}이(가) 대미지 칸에 서있어 **${damage} 피해**를 입었습니다!`;
             if (newHp === 0) message += `<br>💀 ${char.name}이(가) 쓰러졌습니다!`;
             await logAction(message, "damage");
+            // ★ 이 줄을 추가하면 머리 위에 데미지가 뜹니다!
+            await triggerCombatText(char, `-${damage}`, 'damage');
         }
     }
 
@@ -2851,6 +2845,8 @@ function isAttackPossible(attacker, target, attackRange) {
         if (moved) {
             await logAction(`🤖 ${character.name}이(가) (${bestMovePos.x}, ${bestMovePos.y})(으)로 이동합니다.`, "move");
             await updateDoc(doc(db, 'games', gameId, 'characters', character.id), { x: bestMovePos.x, y: bestMovePos.y });
+            // ⬇️ 추가
+            await checkAndApplyTileDamage({ ...character, x: bestMovePos.x, y: bestMovePos.y });
         } else {
             await logAction(`🤖 ${character.name}이(가) 제자리를 유지합니다.`, "system");
         }
@@ -2897,7 +2893,7 @@ function isAttackPossible(attacker, target, attackRange) {
             const isGameOver = await checkGameEndCondition();
             if (isGameOver) return;
             
-            await checkAndApplyTileDamage(currentTurnChar);
+            
         }
     }
 
@@ -3512,15 +3508,22 @@ function triggerWallDestructionEffect(x, y) {
 
     
     async function undoMove() {
-    const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
-    
-    if (!selectedCharacter || !preMovePosition) return;
-    await updateDoc(doc(db, 'games', gameId, 'characters', selectedCharacter.id), { x: preMovePosition.x, y: preMovePosition.y });
-    //await logAction(`↩️ ${selectedCharacter.name}이(가) 이동을 취소했습니다.`, "system");
-    selectedCharActionPhase = 'MOVE'; // <-- [수정] 이동 단계로 되돌림
-    selectedSkill = 'move';
-    render();
-}
+        const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
+        
+        if (!selectedCharacter || !preMovePosition) return;
+        
+        // --- 위치와 함께 체력도 복구할 준비 ---
+        let updates = { x: preMovePosition.x, y: preMovePosition.y };
+        if (preMovePosition.hp !== undefined) {
+            updates.hp = preMovePosition.hp; // 깎였던 체력 복구!
+        }
+
+        await updateDoc(doc(db, 'games', gameId, 'characters', selectedCharacter.id), updates);
+        
+        selectedCharActionPhase = 'MOVE'; // 이동 단계로 되돌림
+        selectedSkill = 'move';
+        render();
+    }
     
     // --- Rendering & UI ---
     function showCustomModal(title, message, buttons) {
@@ -3769,7 +3772,7 @@ async function handleLogout() {
                         selectedCharacterId = char.id;
                         turnPhase = 'MOVE';
                         selectedSkill = 'move';
-                        preMovePosition = { x: char.x, y: char.y };
+                        preMovePosition = { x: char.x, y: char.y, hp: char.hp };
                     }
                     render();
                 }
@@ -5615,11 +5618,11 @@ async function handleCombatClick(e) {
         const selectedCharacter = characters.find(c => c.id === selectedCharacterId);
         if (selectedCharacter && !clickedChar && !cell.classList.contains('combat-range')) {
             if (selectedCharActionPhase === 'ACTION' && preMovePosition) {
-                await updateDoc(doc(db, 'games', gameId, 'characters', selectedCharacter.id), {
-                    x: preMovePosition.x,
-                    y: preMovePosition.y
-                });
-                await logAction(`↩️ ${selectedCharacter.name}의 수동 이동이 취소되었습니다.`, "system");
+                let updates = { x: preMovePosition.x, y: preMovePosition.y };
+                if (preMovePosition.hp !== undefined) updates.hp = preMovePosition.hp; // 체력 복구
+
+                await updateDoc(doc(db, 'games', gameId, 'characters', selectedCharacter.id), updates);
+                await logAction(`↩️ ${selectedCharacter.name}의 이동이 취소되어 체력이 원상복구되었습니다.`, "system");
             }
             selectedCharacterId = null;
             selectedSkill = null;
@@ -5630,6 +5633,8 @@ async function handleCombatClick(e) {
             if (selectedCharActionPhase === 'MOVE') {
                 if (cell.classList.contains('attack-range-move')) {
                     await updateDoc(doc(db, 'games', gameId, 'characters', selectedCharacter.id), { x: cellX, y: cellY });
+                    // ⬇️ 이 줄을 추가하세요! (총 2군데)
+                    await checkAndApplyTileDamage({ ...selectedCharacter, x: cellX, y: cellY });
                     selectedCharActionPhase = 'ACTION';
                     selectedSkill = null;
                     render();
@@ -5652,7 +5657,7 @@ async function handleCombatClick(e) {
             selectedCharacterId = clickedChar.id;
             selectedCharActionPhase = 'MOVE';
             selectedSkill = 'move';
-            preMovePosition = { x: clickedChar.x, y: clickedChar.y };
+            preMovePosition = { x: clickedChar.x, y: clickedChar.y, hp: clickedChar.hp };
             render();
             return;
         }
@@ -5666,6 +5671,8 @@ async function handleCombatClick(e) {
             if (selectedCharActionPhase === 'MOVE') {
                 if (cell.classList.contains('attack-range-move')) {
                     await updateDoc(doc(db, 'games', gameId, 'characters', selectedCharacter.id), { x: cellX, y: cellY });
+                    // ⬇️ 이 줄을 추가하세요! (총 2군데)
+                    await checkAndApplyTileDamage({ ...selectedCharacter, x: cellX, y: cellY });
                     selectedCharActionPhase = 'ACTION';
                     selectedSkill = null;
                     render();
@@ -5717,7 +5724,7 @@ async function handleCombatClick(e) {
                     selectedCharacterId = clickedChar.id;
                     selectedCharActionPhase = 'MOVE';
                     selectedSkill = 'move';
-                    preMovePosition = { x: clickedChar.x, y: clickedChar.y };
+                    preMovePosition = { x: clickedChar.x, y: clickedChar.y, hp: clickedChar.hp };
                     previewCharacterId = null;
                     if (canAdminActForPC) {
                         await logAction(`👮 관리자가 ${clickedChar.name}의 행동을 대리합니다.`, 'admin');
@@ -5893,7 +5900,9 @@ createGameBtn.addEventListener('click', createGame);
         if (canPlaceCharacter(targetChar, newX, newY)) {
             const oldX = targetChar.x;
             await updateDoc(doc(db, 'games', gameId, 'characters', charId), { x: newX, y: newY });
-            
+            // ⬇️ 이 줄을 바로 아래에 추가하세요!
+            await checkAndApplyTileDamage({ ...targetChar, x: newX, y: newY });
+
             if (oldX === null) {
                await logAction(`✅ ${targetChar.name}이(가) 전장에 합류했습니다.`, "join");
             } else if (isAdmin && isAdminMoveAllowed) {
