@@ -1928,6 +1928,34 @@ const combatTextStartTime = new Date();
         description: '적 전원을 4턴간 행동 불능으로 만듭니다. 3턴 안에 다른 개입이 없다면 즉사합니다.'
     },
 
+    // ▼▼▼ 민현우 ▼▼▼
+    'retake': { 
+        id: 'retake', 
+        name: '리테이크', 
+        type: 'Support', 
+        range: 10, 
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🎬', 
+        category: 'Ultimate', 
+        hpCost: 0,
+        description: '희생 중인 아군을 구출합니다. 민첩 판정 실패 시 확정 감염됩니다.'
+    },
+
+    // ▼▼▼ [추가] 임새언 궁극기: 앵콜 요청 ■■ ▼▼▼
+    'encore_request': { 
+        id: 'encore_request', 
+        name: '앵콜 요청 ■■', 
+        type: 'Support', 
+        range: 10,             // 어느 정도 거리가 있어도 가능하도록
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🎤', 
+        category: 'Ultimate',
+        hpCost: 0,
+        description: '지정 1인의 궁극기를 다시 사용할 수 있게 합니다. 해당 스킬의 페널티는 임새언이 대신 감당합니다.'
+    },
+
 };
 
     let SKILLS = {};
@@ -2048,7 +2076,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 
                 { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=39f6416d-430d-44ab-8ca8-1c9d68b0fabf", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'find_usefulness'], order: 1 },
-                { name: "민현우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC%20(2).png?alt=media&token=80fe87f0-7afb-400b-9134-6fd583085cfc", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "민현우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC%20(2).png?alt=media&token=80fe87f0-7afb-400b-9134-6fd583085cfc", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee','retake'], order: 1 },
                 { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%92%E1%85%AC%E1%84%80%E1%85%B1%E1%84%92%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2c827152-46c8-48be-a7d3-dbb0bfd07aee", ultImage: "", type: 'PC', size: 1, bonusDamage: 8, moveRange: 3, agility: 6,  skills: ['move','basic_attack','evade','flee', 'eoram'], order: 1 },
                 { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=44657bc5-b2cd-43dc-822b-0fdf4c935b3a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'cheongchul'], order: 1 },
                 { name: "백건우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%80%E1%85%A5%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=700d37d9-217f-4a82-9722-a2deec58abfb", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee', 'dont_stop'], order: 1 },
@@ -2060,7 +2088,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=920de26c-c450-49bc-be20-95092212a626", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'rambo'], order: 1 },
                 { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC(%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF)_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=11d85fb7-c8c7-4edc-98ed-3d51c5fc270f", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'dinner_call'], order: 1 },
                 { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'biting_desire'], order: 1 },
-                { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=e39bab6c-6064-4cfc-8498-7090c5f81033", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=e39bab6c-6064-4cfc-8498-7090c5f81033", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee', 'encore_request'], order: 1 },
                 { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC_%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF.png?alt=media&token=f2168d25-9377-43d6-9a60-1d6f0f61bde8", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'derailment'], order: 1 },
                 { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_2%E1%84%8E%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c986c48f-11b7-4ce5-8ed5-cc096044c8ed", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee', 'delivery_smash'], order: 1 },
                 { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=bc725a00-316b-435c-b9e5-e09e61a8f816", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
@@ -3694,6 +3722,28 @@ function triggerWallDestructionEffect(x, y) {
                 await logAction(`⚠️ ${attacker.name}은(는) 이미 궁극기를 사용했습니다!`, "system");
                 return;
             }
+            // ▼▼▼ [추가] 민현우(리테이크) 예외 처리: 잘못된 대상이면 컷신도 실행 안 함 ▼▼▼
+            if (skillId === 'retake') {
+                if (!target || (target.deathTimer === undefined || target.deathTimer === null)) {
+                    await logAction(`⚠️ 구출할 수 있는 대상(희생 중인 아군)이 아닙니다.`, "system");
+                    return; // 여기서 종료하면 컷신 신호도 안 가고 ultimateUsed도 안 변함
+                }
+            }
+            // ▲▲▲ 추가 끝 ▲▲▲
+            // ▼▼▼ [추가] 임새언 예외 처리: 아군 PC가 아니면 컷신 방지 ▼▼▼
+            if (skillId === 'encore_request') {
+                if (!target || target.type !== 'PC') {
+                    await logAction(`⚠️ 궁극기를 재충전시킬 아군을 정확히 선택해야 합니다.`, "system");
+                    return; // 여기서 종료하면 컷신 신호도 안 가고 횟수도 안 깎임
+                }
+                // 자기 자신에게 쓰는 것도 막고 싶다면 아래 조건 추가 (선택사항)
+                if (target.id === attacker.id) {
+                    await logAction(`⚠️ 자기 자신에게는 앵콜을 요청할 수 없습니다.`, "system");
+                    return;
+                }
+            }
+            // ▲▲▲ 추가 끝 ▲▲▲
+
             await setDoc(doc(db, 'games', gameId), { 
                 ultimateEvent: { attackerId: attacker.id, skillId: skillId, timestamp: serverTimestamp() }
             }, { merge: true });
@@ -4201,6 +4251,54 @@ function triggerWallDestructionEffect(x, y) {
             actionSucceeded = true;
         }
         //유재이 끝
+
+
+
+        // ▼▼▼ [수정] 민현우 궁극기: 리테이크 ▼▼▼
+        else if (skillId === 'retake') {
+            // (사전 체크는 위쪽 공통 로직에서 이미 완료됨)
+
+             await logAction(`✨ ${attacker.name}이(가) ${target.name}을(를) 죽음의 운명에서 구출했습니다!`, "system");
+
+            // 유재이 구출
+            await updateDoc(doc(db, 'games', gameId, 'characters', target.id), { 
+                deathTimer: null 
+            });
+
+            // 민첩 판정
+            const agility = attacker.agility || 10;
+            const successChance = Math.min(95, agility * 10);
+            const roll = Math.floor(Math.random() * 100) + 1;
+
+            if (roll > successChance) {
+                await applyStatusEffect(attacker, { id: 'infected', turns: 99 });
+                await logAction(`🧟 판정 실패(${roll}%): ${attacker.name}이(가) 구출 중 감염되었습니다!`, "damage");
+            } else {
+                await logAction(`✅ 판정 성공(${roll}%): ${attacker.name}이(가) 무사히 구출을 마쳤습니다.`, "system");
+            }
+            
+            actionSucceeded = true;
+        }
+        // 민현우 끝
+
+        // ▼▼▼ [수정] 임새언 궁극기: 앵콜 요청 ■■ ▼▼▼
+        else if (skillId === 'encore_request') {
+            // (사전 체크는 공통 로직에서 완료됨)
+            // 1. 대상의 궁극기 초기화
+            await updateDoc(doc(db, 'games', gameId, 'characters', target.id), { 
+                ultimateUsed: false 
+            });
+
+            // 2. 페널티 대역 상태 기록
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { 
+                encoreTargetId: target.id 
+            });
+
+            await logAction(`✨ ${target.name}의 스킬이 재충전되었습니다! 페널티는 ${attacker.name}이(가) 대신 받습니다.`, "system");
+            
+            actionSucceeded = true;
+        }
+        //임새언 끝
 
 
 
