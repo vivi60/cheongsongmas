@@ -1575,6 +1575,8 @@ const combatTextStartTime = new Date();
     cannot_flee: { id: 'cannot_flee', name: '도주 불가', icon: '⛓️' },
     // ▼▼▼ [추가] 백람 스킬용 상태 ▼▼▼
     covering: { id: 'covering', name: '도발', icon: '🦸' },
+    // ▼▼▼ [추가] 윤태 스킬용 상태 (감염) ▼▼▼
+    infected: { id: 'infected', name: '감염', icon: '🧟' },
 };
 
     const STATUS_EFFECT_ICONS = {
@@ -1593,6 +1595,8 @@ const combatTextStartTime = new Date();
     cannot_flee: '⛓️',
     // ▼▼▼ [추가] 백람 스킬용 아이콘 ▼▼▼
     covering: '🦸',
+    // ▼▼▼ [추가] 윤태 스킬용 아이콘 ▼▼▼
+    infected: '🧟',
 };
     
     // NEW: Map/Board State Variables
@@ -1775,6 +1779,38 @@ const combatTextStartTime = new Date();
         description: '해당 턴 동안 아군을 향한 모든 공격을 자신이 대신 받습니다.'
     },
 
+    // ▼▼▼ 윤태 ▼▼▼
+    'rambo': { 
+        id: 'rambo', 
+        name: 'RAMBO', 
+        type: 'Utility', 
+        range: 0,             // 자신에게 시전
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '💪', 
+        category: 'Ultimate',
+        hpCost: 30,           // 시전 시 체력 30 감소
+        appliesEffect: null,  // 로직 안에서 직접 상태 이상을 부여할 거라 비워둠
+        description: '랜덤 아군 1명을 가장 가까운 적에게 던집니다. 적은 즉사하며, 대상 아군은 감염됩니다.'
+    },
+
+    // ▼▼▼ [추가] 이은정 궁극기: 그만 놀고 저녁먹으러 들어와! ▼▼▼
+    'dinner_call': { 
+        id: 'dinner_call', 
+        name: '그만 놀고 저녁먹으러 들어와!', 
+        type: 'Utility', 
+        range: 0,             // 자신에게 시전하면 주변 반경으로 효과 발동
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🍲', 
+        category: 'Ultimate',
+        hpCost: 10,           // 시전 시 체력 10 감소
+        isAoe: true,
+        aoeRange: 2,          // 본인 중심 반경 2칸 = 5x5 범위
+        aoeShape: 'square',
+        description: '주변 5x5 범위의 적들을 이끌고 전장을 이탈하며 현재 전투를 강제 종료합니다. (본인 체력 -10)'
+    },
+
 
 };
 
@@ -1905,8 +1941,8 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7f4bcf1f-b3be-4231-9d05-0fff868ee453", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee', 'protect_gamble'], order: 1 },
                 { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC2.png?alt=media&token=95dba849-4c66-4044-b0b2-e0bf9defcd19", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=f128f6f3-5386-4295-8fc3-999da5636973", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=920de26c-c450-49bc-be20-95092212a626", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC(%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF)_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=11d85fb7-c8c7-4edc-98ed-3d51c5fc270f", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=920de26c-c450-49bc-be20-95092212a626", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'rambo'], order: 1 },
+                { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC(%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF)_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=11d85fb7-c8c7-4edc-98ed-3d51c5fc270f", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'dinner_call'], order: 1 },
                 { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'biting_desire'], order: 1 },
                 { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=e39bab6c-6064-4cfc-8498-7090c5f81033", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC_%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF.png?alt=media&token=f2168d25-9377-43d6-9a60-1d6f0f61bde8", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
@@ -3526,6 +3562,124 @@ function triggerWallDestructionEffect(x, y) {
             affectedTargets.push(attacker); // appliesEffect의 '2턴 다중공격'을 나에게 적용하기 위해 추가
         }
         // ▲▲▲ 추가 끝 ▲▲▲
+
+        // ▼▼▼ [추가] 윤태 궁극기: RAMBO ▼▼▼
+        else if (skillId === 'rambo') {
+            // 1. 시전자(윤태) 체력 30 차감
+            if (skill.hpCost > 0) {
+                await updateHP(attacker, -skill.hpCost, "damage");
+                await triggerCombatText(attacker, `-${skill.hpCost}`, 'damage');
+            }
+
+            // 2. 가장 가까운 적 찾기
+            const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
+            let closestEnemy = null;
+            let minEnemyDist = Infinity;
+            
+            for (const enemy of livingEnemies) {
+                const dist = getDistance(attacker, enemy);
+                if (dist < minEnemyDist) {
+                    minEnemyDist = dist;
+                    closestEnemy = enemy;
+                }
+            }
+
+            // 3. 랜덤한 아군 1명 찾기 (윤태 본인 제외)
+            const livingAllies = characters.filter(c => c.type === attacker.type && c.hp > 0 && c.x !== null && c.id !== attacker.id);
+            let randomAlly = null;
+            if (livingAllies.length > 0) {
+                const randomIndex = Math.floor(Math.random() * livingAllies.length);
+                randomAlly = livingAllies[randomIndex];
+            }
+
+            // 4. 스킬 실행!
+            if (closestEnemy) {
+                const targetX = closestEnemy.x;
+                const targetY = closestEnemy.y;
+
+                await logAction(`💪 ${attacker.name}이(가) 저항을 뚫고 가장 가까운 적(${closestEnemy.name})을 향해 아군을 집어 던집니다!`, "system");
+
+                // 적 즉사 처리
+                await updateHP(closestEnemy, -closestEnemy.hp, "damage");
+                // ★ [추가] 사망한 적의 좌표를 null로 만들어서 맵에서 완전히 제거합니다!
+                await updateDoc(doc(db, 'games', gameId, 'characters', closestEnemy.id), { x: null, y: null });
+                await triggerCombatText(closestEnemy, "사망", "damage");
+                await logAction(`💀 ${closestEnemy.name}은(는) 날아오는 아군에 맞아 즉사했습니다!`, "damage");
+
+                // 아군 이동 및 감염 처리
+                if (randomAlly) {
+                    await delay(500);
+                    // 적이 죽은 위치로 아군을 텔레포트 시킴
+                    await updateDoc(doc(db, 'games', gameId, 'characters', randomAlly.id), { x: targetX, y: targetY });
+                    
+                    // 감염 상태 영구 부여 (99턴으로 설정)
+                    await applyStatusEffect(randomAlly, { id: 'infected', turns: 99 });
+                    await logAction(`🧟 던져진 ${randomAlly.name}은(는) 감염 되었습니다!`, "damage");
+                    
+                    // 날아간 자리에 데미지 타일이 있다면 데미지 입히기
+                    await checkAndApplyTileDamage({ ...randomAlly, x: targetX, y: targetY });
+                } else {
+                    await logAction(`...하지만 전장에 던질 아군이 없었습니다!`, "system");
+                }
+            } else {
+                await logAction(`...하지만 전장에 타겟으로 삼을 적이 없습니다!`, "system");
+            }
+            
+            actionSucceeded = true;
+            affectedTargets.push(attacker);
+        }
+        // ▲▲▲ 윤태 궁극기 로직 끝 ▲▲▲
+
+        // ▼▼▼ [추가] 이은정 궁극기: 그만 놀고 저녁먹으러 들어와! ▼▼▼
+        else if (skillId === 'dinner_call') {
+            // 1. 시전자(이은정) 체력 10 차감
+            if (skill.hpCost > 0) {
+                await updateHP(attacker, -skill.hpCost, "damage");
+                await triggerCombatText(attacker, `-${skill.hpCost}`, 'damage');
+            }
+
+            // 2. 5x5 범위 (반경 2칸) 내의 적 찾아서 이탈시키기
+            const range = 2; // 본인 중심 상하좌우 2칸 = 5x5
+            const enemiesInRange = characters.filter(c => 
+                c.type === 'ENEMY' && 
+                c.hp > 0 && 
+                c.x !== null && 
+                Math.abs(c.x - attacker.x) <= range && 
+                Math.abs(c.y - attacker.y) <= range
+            );
+
+            await logAction(`🍲 ${attacker.name}이(가) "그만 놀고 저녁먹으러 들어와!"라고 소리칩니다!`, "system");
+
+            if (enemiesInRange.length > 0) {
+                for (const enemy of enemiesInRange) {
+                    // 적들을 보드에서 치워버림 (이탈)
+                    await updateDoc(doc(db, 'games', gameId, 'characters', enemy.id), { x: null, y: null });
+                    }
+            }
+
+            // 3. 본인도 전장 이탈
+            await delay(500);
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { x: null, y: null, hasActedThisRound: true });
+            await logAction(`🏠 ${attacker.name}이(가) 적들을 데리고 전투를 이탈했습니다!`, "system");
+
+            // 4. 전투 강제 종료 처리
+            await delay(1000);
+            const gameResult = { title: "전투 종료", message: "저녁 식사 시간입니다! 전투가 강제로 종료되었습니다." };
+            
+            // 타이머 중지 및 게임 상태 변경
+            stopTurnTimer(); 
+            await setDoc(doc(db, 'games', gameId), { 
+                gameState: 'ENDED',
+                gameResult: gameResult 
+            }, { merge: true });
+            
+            // 종료 결과창 띄우기
+            showGameSummaryModal(gameResult.title, gameResult.message);
+            
+            actionSucceeded = true;
+            return; // 전투가 종료되었으므로 여기서 함수 실행을 완전히 끝냄
+        }
+        // ▲▲▲ 이은정 궁극기 로직 끝 ▲▲▲
 
         // [4] 이탈 관련 궁극기
         else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
