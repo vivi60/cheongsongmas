@@ -2682,7 +2682,7 @@ async function runUltimateCutscene(attacker, skill) {
     cutsceneImg.style.display = 'block';
     await delay(50);
     cutsceneImg.classList.add('active-img'); // 사진 등장
-    await delay(3000); 
+    await delay(8000); 
 
     cutscene.style.transition = 'opacity 0.8s';
     cutscene.style.opacity = '0';
@@ -3801,7 +3801,7 @@ function triggerWallDestructionEffect(x, y) {
                 ultimateEvent: { attackerId: attacker.id, skillId: skillId, timestamp: serverTimestamp() }
             }, { merge: true });
             await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { ultimateUsed: true });
-            await delay(6500); // 컷신 대기
+            await delay(10500); // 컷신 대기
         }
 
         // [2] 도주(flee) 로직
