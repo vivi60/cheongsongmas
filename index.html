@@ -1567,7 +1567,14 @@ const combatTextStartTime = new Date();
     defenseUp: { id: 'defenseUp', name: '방어력 강화', value: 1.5 },
     defenseDown: { id: 'defenseDown', name: '방어력 약화', value: 0.5 },
     // ▼▼▼ [추가] 회피 상태 (공격 무효화) ▼▼▼
-    evading: { id: 'evading', name: '회피 중', icon: '💨' } 
+    evading: { id: 'evading', name: '회피 중', icon: '💨' },
+    // ▼▼▼ 양희진 (공격 무효화) ▼▼▼
+    protected: { id: 'protected', name: '보호받음 (피해 면역)', icon: '🛡️' },
+    // ▼▼▼ [추가] 이필우 스킬용 상태 ▼▼▼
+    multi_attack_buff: { id: 'multi_attack_buff', name: '동시 타격', icon: '🐾' },
+    cannot_flee: { id: 'cannot_flee', name: '도주 불가', icon: '⛓️' },
+    // ▼▼▼ [추가] 백람 스킬용 상태 ▼▼▼
+    covering: { id: 'covering', name: '도발', icon: '🦸' },
 };
 
     const STATUS_EFFECT_ICONS = {
@@ -1578,7 +1585,14 @@ const combatTextStartTime = new Date();
     strengthUp: '💪',     
     strengthDown: '👎',   
     defenseUp: '🛡️',      
-    defenseDown: '🛡️‍🩹'   
+    defenseDown: '🛡️‍🩹',
+    // ▼▼▼ [추가] 양희진 스킬용 아이콘 ▼▼▼
+    protected: '🛡️',
+    // ▼▼▼ [추가] 이필우 스킬용 아이콘 ▼▼▼
+    multi_attack_buff: '🐾',
+    cannot_flee: '⛓️',
+    // ▼▼▼ [추가] 백람 스킬용 아이콘 ▼▼▼
+    covering: '🦸',
 };
     
     // NEW: Map/Board State Variables
@@ -1687,6 +1701,10 @@ const combatTextStartTime = new Date();
             category: 'Attack'         // 공격 카테고리
         },
 
+
+    // 아래부터 궁극기
+
+
         'beg_for_life': {
     name: '비굴한 구걸',
     category: 'Ultimate',
@@ -1695,9 +1713,71 @@ const combatTextStartTime = new Date();
     // [효과] 본인은 공격 대상 제외(일시적), 3턴간 행동 불능(stunned)
     appliesEffect: { id: 'stunned', turns: 4 }, // 내 턴 종료 시 깎이는 걸 고려해 4로 설정 (실제 3턴 체감)
     description: '공격 대상에서 제외되지만, 주변 1칸 아군에게 피해를 줍니다. 사용 후 3턴간 행동 불가.'
-},
+        },
+
+    // ▼▼▼ 양희진  ▼▼▼
+    'protect_gamble': { 
+        id: 'protect_gamble', 
+        name: 'PEAK OUT!', 
+        type: 'Support', 
+        range: 10,             // 도달할 수 있는 사거리 (필요에 따라 조절해!)
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🛡️', 
+        category: 'Ultimate',
+        hpCost: 30,           // 시전 시 체력 30 감소
+        appliesEffect: { id: 'protected', turns: 1 }, // 타겟에게 1턴 동안 보호 부여
+        description: '좀비와 아군 사이에 난입하여 대상의 사망을 막습니다. (1턴간 타겟 피해 면역)'
+    },            
+
+    // ▼▼▼ 최도화 ▼▼▼
+    'meridian_bind': { 
+        id: 'meridian_bind', 
+        name: '삼라만상 경혈주박', 
+        type: 'Utility', 
+        range: 0,             // 맵 전체 적용이므로 본인 타겟팅(0)으로 시전
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🌀', 
+        category: 'Ultimate',
+        hpCost: 0,
+        appliesEffect: { id: 'stunned', turns: 3 }, // 3턴간 행동 불능
+        description: '현 전투 내의 모든 적을 3턴간 행동 불능 상태로 만듭니다.'
+    },
+
+    // ▼▼▼ 이필우 ▼▼▼
+    'biting_desire': { 
+        id: 'biting_desire', 
+        name: '물고 싶은 마음도…', 
+        type: 'Utility', 
+        range: 0,             // 자신에게 사용 (버프)
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🦷', 
+        category: 'Ultimate',
+        hpCost: 0,
+        appliesEffect: { id: 'multi_attack_buff', turns: 3 }, // 2턴간 다중 공격 버프
+        description: '2턴 동안 사거리 내의 적 최대 3마리를 동시 공격합니다.'
+    },
+
+    // ▼▼▼ 백람 ▼▼▼
+    'cliche_of_cliche': { 
+        id: 'cliche_of_cliche', 
+        name: '클리셰 of 클리셰', 
+        type: 'Utility', 
+        range: 0,             // 자신에게 사용 (버프)
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🦸', 
+        category: 'Ultimate',
+        hpCost: 0,
+        appliesEffect: { id: 'covering', turns: 1 }, // 이번 라운드 적 턴이 끝날 때까지 1턴 유지
+        description: '해당 턴 동안 아군을 향한 모든 공격을 자신이 대신 받습니다.'
+    },
+
 
 };
+
     let SKILLS = {};
     
     // 스킬 카테고리 순서 정의
@@ -1820,19 +1900,19 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%92%E1%85%AC%E1%84%80%E1%85%B1%E1%84%92%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2c827152-46c8-48be-a7d3-dbb0bfd07aee", ultImage: "", type: 'PC', size: 1, bonusDamage: 8, moveRange: 3, agility: 6,  skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=44657bc5-b2cd-43dc-822b-0fdf4c935b3a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "백건우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%80%E1%85%A5%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=700d37d9-217f-4a82-9722-a2deec58abfb", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=eb88eacb-2af5-48ef-b240-97464a6582c0", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=eb88eacb-2af5-48ef-b240-97464a6582c0", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'cliche_of_cliche'], order: 1 },
                 { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7f4bcf1f-b3be-4231-9d05-0fff868ee453", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7f4bcf1f-b3be-4231-9d05-0fff868ee453", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee', 'protect_gamble'], order: 1 },
                 { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC2.png?alt=media&token=95dba849-4c66-4044-b0b2-e0bf9defcd19", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=f128f6f3-5386-4295-8fc3-999da5636973", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=920de26c-c450-49bc-be20-95092212a626", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC(%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF)_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=11d85fb7-c8c7-4edc-98ed-3d51c5fc270f", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'biting_desire'], order: 1 },
                 { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=e39bab6c-6064-4cfc-8498-7090c5f81033", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC_%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF.png?alt=media&token=f2168d25-9377-43d6-9a60-1d6f0f61bde8", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_2%E1%84%8E%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c986c48f-11b7-4ce5-8ed5-cc096044c8ed", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=bc725a00-316b-435c-b9e5-e09e61a8f816", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=6c33dfc8-37f6-46c8-aab1-8f1ceab8df42", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=6c33dfc8-37f6-46c8-aab1-8f1ceab8df42", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'meridian_bind'], order: 1 },
                 { name: "한바다", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=48917438-652f-4d42-b0bd-a5771fafcdf2", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 1, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 
             
@@ -2226,8 +2306,9 @@ function listenForCombatTextEvents(gameId) {
                 // 상태 효과 턴 감소 및 스턴 체크
                 if (char.statusEffects && char.statusEffects.length > 0) {
                     const updatedEffects = char.statusEffects
-                        .map(effect => ({ ...effect, turns: effect.turns - 1 }))
-                        .filter(effect => effect.turns > 0);
+                        // turns가 아니라 turnsRemaining을 깎도록 수정!
+                        .map(effect => ({ ...effect, turnsRemaining: effect.turnsRemaining - 1 }))
+                        .filter(effect => effect.turnsRemaining > 0);
                     updates.statusEffects = updatedEffects;
                     if (updatedEffects.some(e => e.id === 'stunned')) updates.hasActedThisRound = true;
                 }
@@ -3003,6 +3084,29 @@ function isAttackPossible(attacker, target, attackRange) {
         return false; 
     }
 
+    // ▼▼▼ [수정] 백람 '대신 받기(covering)' 로직 완성 ▼▼▼
+    // 타겟과 같은 팀이면서 살아있는 'covering' 상태의 캐릭터를 찾음
+    const protector = characters.find(c => 
+        c.statusEffects?.some(e => e.id === 'covering') && 
+        c.hp > 0 && 
+        c.type === defender.type
+    );
+    
+    // 보호자가 있고, 방어자가 보호자 본인이 아닐 경우에만 발동!
+    if (protector && defender.id !== protector.id) {
+        await logAction(`🦸 ${protector.name}이(가) 몸을 날려 ${defender.name} 대신 공격을 받습니다!`, "system");
+        // ★ 핵심: 이후의 모든 데미지 계산과 이펙트가 백람에게 들어가도록 방어자를 완전히 교체함!
+        defender = protector; 
+    }
+    // ▲▲▲ 대신 맞기 로직 끝 ▲▲▲
+
+    // [추가] 양희진 스킬: 보호받음 상태일 때 데미지 무효화
+        if (defender.statusEffects?.some(e => e.id === 'protected')) {
+            await triggerCombatText(defender, "GUARD!", "heal");
+            await logAction(`🛡️ 양희진의 난입으로 ${defender.name}이(가) 피해를 입지 않았습니다!`, "system");
+            return false; // 데미지 0으로 처리
+        }
+
         // ▼▼▼ [수정] 회피 상태 체크 로직 (확률 적용) ▼▼▼
         if (defender.statusEffects?.some(e => e.id === 'evading')) {
             const agility = defender.agility || 10;
@@ -3018,14 +3122,7 @@ function isAttackPossible(attacker, target, attackRange) {
                 // 여기서 return 하지 않고 아래로 내려가서 데미지를 입습니다.
             }
         }
-        // [추가] 피해 전가 로직 (예: 범지태의 피해 대신 받기)
-    // 'cover' 상태인 캐릭터가 있다면 그 캐릭터가 대신 피해를 입도록 대상을 바꿈
-    const protector = characters.find(c => c.statusEffects?.some(e => e.id === 'covering'));
-    let actualDefender = defender;
-    if (protector && defender.id !== protector.id) {
-        actualDefender = protector;
-        await logAction(`🛡️ ${protector.name}이(가) 대신 공격을 막아섰습니다!`, "system");
-    }
+        
         // ... (타격 효과 애니메이션 부분은 그대로 둠) ...
         const defenderToken = document.querySelector(`.character-token[data-char-id="${defender.id}"]`);
         if (defenderToken) {
@@ -3149,8 +3246,16 @@ if (targetToken) {
         await triggerCombatText(target, `+${finalHeal.toFixed(0)}`, 'heal');
 
         await logAction(message, "heal");
-    }
     
+    // ▼▼▼ [추가] 서포트 스킬 사용 시 로그 출력 ▼▼▼
+    } else if (skill.type === 'Support') {
+        message = `🛡️ ${caster.name}이(가) ${target.name}에게 [${skill.name}]을(를) 시전했습니다!`;
+        if (skill.hpCost > 0) {
+             await triggerCombatText(caster, `-${skill.hpCost}`, 'damage');
+        }
+        await logAction(message, "system");
+    }
+    // ▲▲▲ 추가 끝 ▲▲▲
     return true;
 }
 
@@ -3333,6 +3438,12 @@ function triggerWallDestructionEffect(x, y) {
 
         // [2] 도주(flee) 로직
         if (skillId === 'flee') {
+            // ▼▼▼ [추가] 이필우 도주 불가 상태 체크 ▼▼▼
+            if (attacker.statusEffects?.some(e => e.id === 'cannot_flee')) {
+                await logAction(`⛓️ ${attacker.name}은(는) 도주할 수 없습니다!`, "system");
+                return; // 도주 실패, 턴 소모 안 함 (다시 다른 행동 선택 가능)
+            }
+            // ▲▲▲ 추가 끝 ▲▲▲
             const agility = attacker.agility || 1;
             const successChance = Math.min(100, agility * 10);
             const roll = Math.floor(Math.random() * 100) + 1;
@@ -3368,6 +3479,53 @@ function triggerWallDestructionEffect(x, y) {
             actionSucceeded = true;
             affectedTargets.push(attacker); 
         }
+
+        // ▼▼▼ [추가/수정] 양희진 궁극기: 서로의 목숨을 겁시다 ▼▼▼
+        else if (skillId === 'protect_gamble') {
+            if (skill.hpCost > 0) {
+                // 체력 차감 및 데미지 이펙트 출력
+                await updateHP(attacker, -skill.hpCost, "damage");
+                await triggerCombatText(attacker, `-${skill.hpCost}`, 'damage');
+            }
+            await logAction(`🛡️ ${attacker.name}이(가) ${target.name}에게 [${skill.name}]을(를) 시전하며 희생합니다!`, "system");
+            
+            actionSucceeded = true;
+            affectedTargets.push(target); // 대상에게 보호 효과 적용
+        }
+        // ▲▲▲ 양희진 궁극기 로직 끝 ▲▲▲
+
+        // ▼▼▼ [추가] 최도화 궁극기: 삼라만상 경혈주박 ▼▼▼
+        else if (skillId === 'meridian_bind') {
+            // 맵에 살아있는 모든 적군을 찾아서 타겟 목록(affectedTargets)에 넣음
+            const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
+            for (const enemy of livingEnemies) {
+                affectedTargets.push(enemy); 
+            }
+            await logAction(`🌀 ${attacker.name}이(가) [삼라만상 경혈주박]을 시전하여 전장의 모든 적을 결박합니다!`, "system");
+
+            // 본인의 민첩(agility) 스탯을 3으로 영구 고정
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { agility: 3, moveRange: 1 });
+            await logAction(`📉 무리한 기력 소모로 인해 ${attacker.name}의 민첩이 3으로 하락했습니다.`, "system");
+            
+            actionSucceeded = true;
+        }
+        // ▲▲▲ 추가 끝 ▲▲▲
+
+        // ▼▼▼ [추가] 이필우 궁극기: 물고 싶은 마음도…. ▼▼▼
+        else if (skillId === 'biting_desire') {
+            await logAction(`🦷 ${attacker.name}이(가) 적들을 향해 달려듭니다!`, "system");
+
+            // 1. 근력을 7로 영구 하락 (bonusDamage = 7)
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { bonusDamage: 7 });
+            await logAction(`📉 ${attacker.name}의 근력이 7로 하락했습니다.`, "system");
+
+            // 2. 도주 불가 상태 영구 부여 (99턴으로 설정)
+            await applyStatusEffect(attacker, { id: 'cannot_flee', turns: 99 });
+            
+            actionSucceeded = true;
+            affectedTargets.push(attacker); // appliesEffect의 '2턴 다중공격'을 나에게 적용하기 위해 추가
+        }
+        // ▲▲▲ 추가 끝 ▲▲▲
 
         // [4] 이탈 관련 궁극기
         else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
@@ -3442,12 +3600,41 @@ function triggerWallDestructionEffect(x, y) {
                     
                     if (skill.category === 'Attack') {
                         const success = await applyDamage(attacker, target, skillId);
-                        if (success) { actionSucceeded = true; affectedTargets.push(target); }
+                        if (success) { 
+                            actionSucceeded = true; 
+                            affectedTargets.push(target); 
+                            
+                            // ▼▼▼ [수정] 이필우 다중 공격 버프 로직 (공격 성공 시 발동하도록 위치 변경) ▼▼▼
+                            if (attacker.statusEffects?.some(e => e.id === 'multi_attack_buff')) {
+                                // 1. 타겟 근처(거리 4 이내)에 있는 다른 적들을 싹 찾음
+                                const otherEnemies = characters.filter(c => 
+                                    c.type !== attacker.type && // 적군
+                                    c.hp > 0 && 
+                                    c.x !== null && 
+                                    c.id !== target.id && // 본 타겟 제외
+                                    getDistance(target, c) <= 4 // ★ 타겟 주변 거리 2칸 이내로 수정!
+                                );
+                                
+                                // 2. 찾은 적들 중 최대 2마리까지만 추가로 타격 (총 3마리 타격)
+                                const additionalTargets = otherEnemies.slice(0, 2);
+                                if (additionalTargets.length > 0) {
+                                    await delay(500);
+                                    for (const addTarget of additionalTargets) {
+                                        const addSuccess = await applyDamage(attacker, addTarget, skillId);
+                                        if (addSuccess) affectedTargets.push(addTarget);
+                                        await delay(400); // 연속 타격감 연출 딜레이
+                                    }
+                                }
+                            }
+                            // ▲▲▲ 다중 공격 버프 로직 끝 ▲▲▲
+                        }
                     } else {
                         // 회피, 도주, 방어 등은 아군(자신) 타겟팅 허용
                         actionSucceeded = true;
                         affectedTargets.push(target);
                     }
+
+                    
                 } else {
                     const tileHit = await hitTile(target.x, target.y, tileDamage);
                     if (tileHit) actionSucceeded = true;
@@ -6331,7 +6518,4 @@ document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter
 </script>
 </body>
 </html>
-
-
-
 
