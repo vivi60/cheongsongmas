@@ -1898,6 +1898,36 @@ const combatTextStartTime = new Date();
         description: '공격력이 2배, 피격 데미지가 2배 증가합니다.'
     },
 
+    // ▼▼▼ 장만우  ▼▼▼
+    'delivery_smash': { 
+        id: 'delivery_smash', 
+        name: '철가방 스매시', 
+        type: 'Utility', 
+        range: 0,             // 전체 적용이므로 본인 타겟팅
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🥡', 
+        category: 'Ultimate',
+        hpCost: 0,
+        appliesEffect: { id: 'stunned', turns: 3 }, // 3턴간 행동 불능
+        description: '현 전투 내의 모든 적을 3턴간 행동 불능으로 만듭니다. (근력 스탯 5로 영구 하락)'
+    },
+
+    // ▼▼▼ 유재이  ▼▼▼
+    'play_with_me': { 
+        id: 'play_with_me', 
+        name: '자기들, 그러지 말고 나랑 놀까?❤️', 
+        type: 'Utility', 
+        range: 0, 
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '❤️', 
+        category: 'Ultimate',
+        hpCost: 0,
+        appliesEffect: { id: 'stunned', turns: 4 }, // 4턴간 행동 불능
+        description: '적 전원을 4턴간 행동 불능으로 만듭니다. 3턴 안에 다른 개입이 없다면 즉사합니다.'
+    },
+
 };
 
     let SKILLS = {};
@@ -2025,14 +2055,14 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=eb88eacb-2af5-48ef-b240-97464a6582c0", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'cliche_of_cliche'], order: 1 },
                 { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7f4bcf1f-b3be-4231-9d05-0fff868ee453", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee', 'protect_gamble'], order: 1 },
-                { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC2.png?alt=media&token=95dba849-4c66-4044-b0b2-e0bf9defcd19", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC2.png?alt=media&token=95dba849-4c66-4044-b0b2-e0bf9defcd19", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee','play_with_me'], order: 1 },
                 { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=f128f6f3-5386-4295-8fc3-999da5636973", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee', 'sit_nayoung'], order: 1 },
                 { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=920de26c-c450-49bc-be20-95092212a626", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'rambo'], order: 1 },
                 { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC(%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF)_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=11d85fb7-c8c7-4edc-98ed-3d51c5fc270f", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'dinner_call'], order: 1 },
                 { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'biting_desire'], order: 1 },
                 { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=e39bab6c-6064-4cfc-8498-7090c5f81033", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC_%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF.png?alt=media&token=f2168d25-9377-43d6-9a60-1d6f0f61bde8", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'derailment'], order: 1 },
-                { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_2%E1%84%8E%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c986c48f-11b7-4ce5-8ed5-cc096044c8ed", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_2%E1%84%8E%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c986c48f-11b7-4ce5-8ed5-cc096044c8ed", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee', 'delivery_smash'], order: 1 },
                 { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=bc725a00-316b-435c-b9e5-e09e61a8f816", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=6c33dfc8-37f6-46c8-aab1-8f1ceab8df42", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'meridian_bind'], order: 1 },
                 { name: "한바다", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=48917438-652f-4d42-b0bd-a5771fafcdf2", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 1, skills: ['move','basic_attack','evade','flee'], order: 1 },
@@ -2466,11 +2496,26 @@ function listenForCombatTextEvents(gameId) {
                 // 상태 효과 턴 감소 및 스턴 체크
                 if (char.statusEffects && char.statusEffects.length > 0) {
                     const updatedEffects = char.statusEffects
-                        // turns가 아니라 turnsRemaining을 깎도록 수정!
                         .map(effect => ({ ...effect, turnsRemaining: effect.turnsRemaining - 1 }))
                         .filter(effect => effect.turnsRemaining > 0);
                     updates.statusEffects = updatedEffects;
                     if (updatedEffects.some(e => e.id === 'stunned')) updates.hasActedThisRound = true;
+                }
+
+                // ▼▼▼ [수정] 사망 타이머 처리: 시체 유지 버전 ▼▼▼
+                if (char.deathTimer !== undefined && char.deathTimer !== null && char.deathTimer > 0) {
+                    const newTimer = char.deathTimer - 1;
+                    if (newTimer === 0) {
+                        // 즉사 처리: HP만 0으로 만들고 좌표(x, y)는 유지하여 시체를 남김
+                        updates.hp = 0;
+                        updates.deathTimer = null;
+                        // updates.x = null; // 좌표 삭제 코드를 주석 처리하거나 제거
+                        // updates.y = null;
+                        logAction(`💀 유재이가 매혹의 대가를 치르고 쓰러졌습니다.`, "damage");
+                    } else {
+                        updates.deathTimer = newTimer;
+                        logAction(`⏳ ${char.name}의 생명이 다하기까지 ${newTimer}턴 남았습니다.`, "system");
+                    }
                 }
 
                 const charRef = doc(db, 'games', gameId, 'characters', char.id);
@@ -4112,6 +4157,52 @@ function triggerWallDestructionEffect(x, y) {
             // ★ [중요] 이 줄이 있어야 스킬 사용이 정상 완료됩니다!
             actionSucceeded = true; 
         }
+        // 유한결 끝
+
+        // ▼▼▼ [추가] 장만우 궁극기: 철가방 스매시 ▼▼▼
+        else if (skillId === 'delivery_smash') {
+            await logAction(`🥡 ${attacker.name}이(가) 철가방을 휘둘러 전장을 압도합니다!`, "system");
+
+            // 1. 맵에 살아있는 모든 적군을 찾아 행동 불능 대상 목록에 추가
+            const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
+            for (const enemy of livingEnemies) {
+                affectedTargets.push(enemy); 
+            }
+            await logAction(`💫 모든 적이 3턴간 행동 불능 상태에 빠집니다!`, "system");
+
+            // 2. 본인의 근력(bonusDamage) 스탯을 5로 영구 하락
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { 
+                bonusDamage: 5 
+            });
+            await logAction(`📉 무리한 힘의 사용으로 인해 ${attacker.name}의 근력이 5로 하락했습니다.`, "system");
+            
+            actionSucceeded = true;
+        }
+        // ▲▲▲ 장만우 궁극기 로직 끝 ▲▲▲
+
+        // ▼▼▼ [수정] 유재이 궁극기: 나랑 놀까?❤️ ▼▼▼
+        else if (skillId === 'play_with_me') {
+            await logAction(`💋 ${attacker.name}: "자기들, 그러지 말고 나랑 놀까?❤️"`, "system");
+
+            // 1. 맵에 살아있는 모든 적군 4턴간 스턴 적용
+            const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
+            for (const enemy of livingEnemies) {
+                affectedTargets.push(enemy); // appliesEffect의 stunned 4턴이 적용됨
+            }
+            
+            await logAction(`💖 모든 적이 유재이의 매혹에 빠져 4턴간 멈춥니다!`, "system");
+
+            // 2. [핵심] 유재이 본인에게 2턴 뒤 사망 타이머 부여
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { 
+                deathTimer: 3
+            });
+            await logAction(`⚠️ 유재이가 위험한 계약의 대가로 2턴 뒤 사망할 위기에 처합니다!`, "damage");
+            
+            actionSucceeded = true;
+        }
+        //유재이 끝
+
+
 
         // [4] 이탈 관련 궁극기
         else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
