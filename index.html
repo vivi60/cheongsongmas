@@ -1794,7 +1794,7 @@ const combatTextStartTime = new Date();
         description: '랜덤 아군 1명을 가장 가까운 적에게 던집니다. 적은 즉사하며, 대상 아군은 감염됩니다.'
     },
 
-    // ▼▼▼ [추가] 이은정 궁극기: 그만 놀고 저녁먹으러 들어와! ▼▼▼
+    // ▼▼▼ 이은정 ▼▼▼
     'dinner_call': { 
         id: 'dinner_call', 
         name: '그만 놀고 저녁먹으러 들어와!', 
@@ -1809,6 +1809,34 @@ const combatTextStartTime = new Date();
         aoeRange: 2,          // 본인 중심 반경 2칸 = 5x5 범위
         aoeShape: 'square',
         description: '주변 5x5 범위의 적들을 이끌고 전장을 이탈하며 현재 전투를 강제 종료합니다. (본인 체력 -10)'
+    },
+
+    // ▼▼▼ 고요한 ▼▼▼
+    'cheongchul': { 
+        id: 'cheongchul', 
+        name: '靑出', 
+        type: 'Ranged',       // 대상을 지정해서 쏘는 방식
+        range: 10,             // 사거리는 넉넉하게 5칸
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🔵', 
+        category: 'Ultimate',
+        hpCost: 0,            // 체력을 1로 만드는 로직을 직접 짤 거라 0으로 둠
+        description: '자신의 체력을 1로 만들고, 감소한 수치만큼의 고정 피해를 선택한 적에게 입힙니다.'
+    },
+
+    // ▼▼▼ [추가] 강하나 궁극기: 於藍 ▼▼▼
+    'eoram': { 
+        id: 'eoram', 
+        name: '於藍', 
+        type: 'Ranged', 
+        range: 10,             // 고요한과 동일하게 넉넉한 사거리
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🌊', 
+        category: 'Ultimate',
+        hpCost: 0,
+        description: '고요한의 최대 공격값 + 15의 피해를 입히며, 오버 데미지는 가장 가까운 적에게 전이됩니다.'
     },
 
 
@@ -1933,8 +1961,8 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=39f6416d-430d-44ab-8ca8-1c9d68b0fabf", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "민현우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC%20(2).png?alt=media&token=80fe87f0-7afb-400b-9134-6fd583085cfc", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%92%E1%85%AC%E1%84%80%E1%85%B1%E1%84%92%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2c827152-46c8-48be-a7d3-dbb0bfd07aee", ultImage: "", type: 'PC', size: 1, bonusDamage: 8, moveRange: 3, agility: 6,  skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=44657bc5-b2cd-43dc-822b-0fdf4c935b3a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%92%E1%85%AC%E1%84%80%E1%85%B1%E1%84%92%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2c827152-46c8-48be-a7d3-dbb0bfd07aee", ultImage: "", type: 'PC', size: 1, bonusDamage: 8, moveRange: 3, agility: 6,  skills: ['move','basic_attack','evade','flee', 'eoram'], order: 1 },
+                { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=44657bc5-b2cd-43dc-822b-0fdf4c935b3a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'cheongchul'], order: 1 },
                 { name: "백건우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%80%E1%85%A5%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=700d37d9-217f-4a82-9722-a2deec58abfb", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=eb88eacb-2af5-48ef-b240-97464a6582c0", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'cliche_of_cliche'], order: 1 },
                 { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
@@ -3454,6 +3482,38 @@ function triggerWallDestructionEffect(x, y) {
         const skill = SKILLS[skillId];
         if (!skill || !target) return;
 
+        // ▼▼▼ [추가/수정] 스킬 사용 전 사전 변수 선언 및 타겟 검사 ▼▼▼
+        let eoramBaseDamage = 0; // 강하나 스킬용 데미지 저장 변수
+
+        if (skillId === 'cheongchul') { // 고요한 궁극기
+            if (!target.id || target.id === attacker.id || target.type === attacker.type) {
+                await logAction(`⚠️ 적을 타겟으로 정확히 지정해야 합니다. (빈 땅 공격 불가)`, "system");
+                return; 
+            }
+        } else if (skillId === 'protect_gamble') { // 양희진 궁극기 
+            if (!target.id || target.id === attacker.id || target.type !== attacker.type) {
+                await logAction(`⚠️ 보호할 아군을 정확히 지정해야 합니다. (빈 땅 지정 불가)`, "system");
+                return; 
+            }
+        // ★ [추가된 부분] 강하나 궁극기: 팝업창 띄우기!
+        } else if (skillId === 'eoram') { 
+            if (!target.id || target.id === attacker.id || target.type === attacker.type) {
+                await logAction(`⚠️ 적을 타겟으로 정확히 지정해야 합니다. (빈 땅 공격 불가)`, "system");
+                return; 
+            }
+            // 브라우저 기본 팝업창을 띄워 값을 입력받습니다.
+            const inputVal = window.prompt("관리자 직접 입력: 고요한 캐릭터가 도출한 최대 공격값을 입력하세요. (숫자만 입력)", "0");
+            
+            // 취소를 누르거나 문자를 입력하면 스킬 사용 취소 (궁극기 횟수 보존)
+            if (inputVal === null || inputVal.trim() === '' || isNaN(parseInt(inputVal))) {
+                await logAction(`⚠️ 올바르지 않은 값 입력으로 궁극기 사용이 취소되었습니다.`, "system");
+                return;
+            }
+            // 입력한 값에 15를 더해서 최종 데미지로 저장합니다!
+            eoramBaseDamage = parseInt(inputVal) + 15;
+        }
+        // ▲▲▲ 추가 끝 ▲▲▲
+        
         // [중요] 변수 선언 및 초기화
         let actionSucceeded = false;
         let affectedTargets = [];
@@ -3680,6 +3740,122 @@ function triggerWallDestructionEffect(x, y) {
             return; // 전투가 종료되었으므로 여기서 함수 실행을 완전히 끝냄
         }
         // ▲▲▲ 이은정 궁극기 로직 끝 ▲▲▲
+
+        // ▼▼▼ [수정] 고요한 궁극기: 靑出 ▼▼▼
+        else if (skillId === 'cheongchul') {
+
+            // 현재 체력에서 1을 뺀 값 = 적에게 줄 데미지이자 본인이 잃을 체력
+            const hpReduced = attacker.hp - 1;
+            
+            if (hpReduced <= 0) {
+                await logAction(`⚠️ 이미 체력이 1이라 힘을 끌어낼 수 없습니다!`, "system");
+                return;
+            }
+
+            // 1. 본인 체력을 1로 깎음
+            await updateHP(attacker, -hpReduced, "damage");
+            await triggerCombatText(attacker, `-${hpReduced}`, 'damage');
+            await logAction(`🔵 ${attacker.name}이(가) 생명력을 깎아 푸른 기운을 뿜어냅니다! (체력 1로 감소)`, "system");
+
+            await delay(500); // 연출을 위한 약간의 딜레이
+
+            // 2. 적에게 깎인 체력만큼의 고정 데미지를 입힘
+            const newHp = await updateHP(target, -hpReduced, "damage");
+            await triggerCombatText(target, `-${hpReduced}`, 'damage');
+            
+            // 타격 애니메이션 (빨간색 번쩍임)
+            const defenderToken = document.querySelector(`.character-token[data-char-id="${target.id}"]`);
+            if (defenderToken) {
+                defenderToken.classList.add('hit-animation', 'show-hit-overlay');
+                setTimeout(() => defenderToken.classList.remove('hit-animation', 'show-hit-overlay'), 1000);
+            }
+
+            // 로그 출력
+            let message = `💥 [靑出] 발동! ${target.name}에게 **${hpReduced} 고정 피해!**`;
+            if (newHp === 0) message += `<br>💀 ${target.name}이(가) 쓰러졌습니다!`;
+            await logAction(message, "damage");
+
+            actionSucceeded = true;
+            affectedTargets.push(target);
+        }
+        // ▲▲▲ 고요한 궁극기 로직 끝 ▲▲▲
+
+        // ▼▼▼ [추가] 강하나 궁극기: 於藍 ▼▼▼
+        else if (skillId === 'eoram') {
+            await logAction(`🌊 ${attacker.name}이(가) 아버지를 뛰어넘는 푸른 기운을 뿜어냅니다! (총 피해량: ${eoramBaseDamage})`, "system");
+            
+            // 1. 민첩 스탯 2로 하락 (영구)
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { agility: 2 , moveRange: 1});
+            await logAction(`📉 ${attacker.name}의 민첩이 2로 하락했습니다.`, "system");
+            await delay(500);
+
+            // 2. 연쇄 데미지 로직 준비
+            let remainingDamage = eoramBaseDamage;
+            let currentTarget = target;
+
+            // 남은 데미지가 있고 전이될 적이 있는 동안 계속 반복 (무한 연쇄!)
+            while (remainingDamage > 0 && currentTarget) {
+                let hpBefore = currentTarget.hp;
+                // 적의 현재 체력과 남은 데미지 중 더 작은 값을 깎일 데미지로 설정 (오버 데미지 방지)
+                let damageToTake = Math.min(hpBefore, remainingDamage);
+                
+                // 데미지 적용
+                const newHp = await updateHP(currentTarget, -damageToTake, "damage");
+                await triggerCombatText(currentTarget, `-${damageToTake}`, 'damage');
+                
+                // 타격 애니메이션 (빨간색 번쩍임)
+                const defenderToken = document.querySelector(`.character-token[data-char-id="${currentTarget.id}"]`);
+                if (defenderToken) {
+                    defenderToken.classList.add('hit-animation', 'show-hit-overlay');
+                    setTimeout(() => defenderToken.classList.remove('hit-animation', 'show-hit-overlay'), 1000);
+                }
+
+                remainingDamage -= damageToTake; // 깎은 만큼 남은 데미지 차감
+                affectedTargets.push(currentTarget); // 이미 맞은 적으로 기록
+
+                let msg = `💥 [於藍] ${currentTarget.name}에게 **${damageToTake} 피해!**`;
+                if (newHp === 0) {
+                    msg += `<br>💀 ${currentTarget.name}이(가) 쓰러졌습니다!`;
+                    }
+                await logAction(msg, "damage");
+                
+                // 3. 데미지가 남았다면 오버 데미지 전이
+                if (remainingDamage > 0) {
+                    // 아직 맞지 않은 살아있는 적들만 찾기
+                    const livingEnemies = characters.filter(c => 
+                        c.type === 'ENEMY' && c.hp > 0 && c.x !== null && 
+                        !affectedTargets.some(t => t.id === c.id) 
+                    );
+                    
+                    if (livingEnemies.length === 0) {
+                        await logAction(`...전장에 남은 적이 없어 남은 피해(${remainingDamage})가 허공으로 흩어졌습니다!`, "system");
+                        break; 
+                    }
+
+                    // 방금 맞은 적(currentTarget)을 기준으로 가장 가까운 적 찾기
+                    let minDist = Infinity;
+                    let nextTarget = null;
+                    for (const enemy of livingEnemies) {
+                        const dist = getDistance(currentTarget, enemy);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            nextTarget = enemy;
+                        }
+                    }
+
+                    if (nextTarget) {
+                        await logAction(`⚡ 오버된 피해(${remainingDamage})가 가장 가까운 적(${nextTarget.name})에게 전이됩니다!`, "system");
+                        currentTarget = nextTarget;
+                        await delay(800); // 연쇄 타격감을 위한 0.8초 딜레이
+                    } else {
+                        break;
+                    }
+                }
+            }
+            
+            actionSucceeded = true;
+        }
+        // ▲▲▲ 강하나 궁극기 로직 끝 ▲▲▲
 
         // [4] 이탈 관련 궁극기
         else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
