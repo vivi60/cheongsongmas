@@ -1552,7 +1552,10 @@ const combatTextStartTime = new Date();
     let previewCharacterId = null; 
     let round = 1;
     let maxRounds = 0;
-    
+    // ▼▼▼ [추가] 고요한 최대 데미지 저장 변수 ▼▼▼
+    let goyohanMaxDamage = 0;
+
+
     let loggedInCharId = null; 
     let isAdmin = false;       
     let isAdminMoveAllowed = true; 
@@ -1825,7 +1828,7 @@ const combatTextStartTime = new Date();
         description: '자신의 체력을 1로 만들고, 감소한 수치만큼의 고정 피해를 선택한 적에게 입힙니다.'
     },
 
-    // ▼▼▼ [추가] 강하나 궁극기: 於藍 ▼▼▼
+    // ▼▼▼ 강하나 ▼▼▼
     'eoram': { 
         id: 'eoram', 
         name: '於藍', 
@@ -1839,6 +1842,61 @@ const combatTextStartTime = new Date();
         description: '고요한의 최대 공격값 + 15의 피해를 입히며, 오버 데미지는 가장 가까운 적에게 전이됩니다.'
     },
 
+    // ▼▼▼ 임해신 ▼▼▼
+    'derailment': { 
+        id: 'derailment', 
+        name: '탈선', 
+        type: 'Utility', 
+        range: 0,             // 자신에게 사용
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🚂', 
+        category: 'Ultimate',
+        hpCost: 5,            // 시전 시 체력 5 감소
+        description: '자신의 체력이 20 이하일 때만 사용 가능. 전투에서 이탈하며 모든 적을 3턴간 행동 불능으로 만듭니다.'
+    },
+
+    // ▼▼▼ 강진혁  ▼▼▼
+    'find_usefulness': { 
+        id: 'find_usefulness', 
+        name: '쓸모를 찾아드립니다.', 
+        type: 'Support',      // 아군을 타겟으로 함
+        range: 10,            // 사거리는 맵 전역 (넉넉하게 10)
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🚷', 
+        category: 'Ultimate',
+        hpCost: 0,
+        description: '감염된 아군을 지정하여 주변 1칸의 적과 함께 이탈시킵니다.'
+    },
+
+    // ▼▼▼ 백건우 ▼▼▼
+    'dont_stop': { 
+        id: 'dont_stop', 
+        name: '멈추지 않으면 괜찮잖아!', 
+        type: 'Utility', 
+        range: 0,             // 자신에게 사용
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🏍️', 
+        category: 'Ultimate',
+        hpCost: 15,           // 시전 시 체력 15 감소
+        description: '판에 있는 모든 적을 데리고 전장을 이탈하며 강제로 전투를 종료합니다.'
+    },
+
+    // ▼▼▼ 유한결 ▼▼▼
+    'sit_nayoung': { 
+        id: 'sit_nayoung', 
+        name: '나영아, 앉아!', 
+        type: 'Buff', 
+        range: 0, 
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🐕', 
+        category: 'Ultimate',
+        hpCost: 0,
+        description: '공격력이 2배, 피격 데미지가 2배 증가합니다.'
+    },
 
 };
 
@@ -1959,21 +2017,21 @@ const loginStatusModal = document.getElementById('login-status-modal');
         const pcData = [ 
                 
                 { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=39f6416d-430d-44ab-8ca8-1c9d68b0fabf", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=39f6416d-430d-44ab-8ca8-1c9d68b0fabf", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'find_usefulness'], order: 1 },
                 { name: "민현우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8E%E1%85%A9%E1%84%8B%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC%20(2).png?alt=media&token=80fe87f0-7afb-400b-9134-6fd583085cfc", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%92%E1%85%AC%E1%84%80%E1%85%B1%E1%84%92%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2c827152-46c8-48be-a7d3-dbb0bfd07aee", ultImage: "", type: 'PC', size: 1, bonusDamage: 8, moveRange: 3, agility: 6,  skills: ['move','basic_attack','evade','flee', 'eoram'], order: 1 },
                 { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=44657bc5-b2cd-43dc-822b-0fdf4c935b3a", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'cheongchul'], order: 1 },
-                { name: "백건우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%80%E1%85%A5%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=700d37d9-217f-4a82-9722-a2deec58abfb", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "백건우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%80%E1%85%A5%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=700d37d9-217f-4a82-9722-a2deec58abfb", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee', 'dont_stop'], order: 1 },
                 { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=eb88eacb-2af5-48ef-b240-97464a6582c0", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'cliche_of_cliche'], order: 1 },
                 { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7f4bcf1f-b3be-4231-9d05-0fff868ee453", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee', 'protect_gamble'], order: 1 },
                 { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC2.png?alt=media&token=95dba849-4c66-4044-b0b2-e0bf9defcd19", ultImage: "", type: 'PC', size: 1, bonusDamage: 6, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=f128f6f3-5386-4295-8fc3-999da5636973", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=f128f6f3-5386-4295-8fc3-999da5636973", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee', 'sit_nayoung'], order: 1 },
                 { name: "윤태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%86%AB%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=920de26c-c450-49bc-be20-95092212a626", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'rambo'], order: 1 },
                 { name: "이은정", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%84%8B%E1%85%B3%E1%86%AB%E1%84%8C%E1%85%A5%E1%86%BC(%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF)_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=11d85fb7-c8c7-4edc-98ed-3d51c5fc270f", ultImage: "", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'dinner_call'], order: 1 },
                 { name: "이필우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%8B%E1%85%B5%E1%84%91%E1%85%B5%E1%86%AF%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2e4c9b48-5f34-42cf-9c09-6b7385325140", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'biting_desire'], order: 1 },
                 { name: "임새언", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%89%E1%85%A2%E1%84%8B%E1%85%A5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=e39bab6c-6064-4cfc-8498-7090c5f81033", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee'], order: 1 },
-                { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC_%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF.png?alt=media&token=f2168d25-9377-43d6-9a60-1d6f0f61bde8", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "임해신", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B5%E1%86%B7%E1%84%92%E1%85%A2%E1%84%89%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC_%E1%84%85%E1%85%B5%E1%84%82%E1%85%B2%E1%84%8B%E1%85%A5%E1%86%AF.png?alt=media&token=f2168d25-9377-43d6-9a60-1d6f0f61bde8", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'derailment'], order: 1 },
                 { name: "장만우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8C%E1%85%A1%E1%86%BC%E1%84%86%E1%85%A1%E1%86%AB%E1%84%8B%E1%85%AE_2%E1%84%8E%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=c986c48f-11b7-4ce5-8ed5-cc096044c8ed", ultImage: "", type: 'PC', size: 1, bonusDamage: 9, moveRange: 2, agility: 5, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=bc725a00-316b-435c-b9e5-e09e61a8f816", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=6c33dfc8-37f6-46c8-aab1-8f1ceab8df42", ultImage: "", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'meridian_bind'], order: 1 },
@@ -1999,6 +2057,22 @@ const loginStatusModal = document.getElementById('login-status-modal');
             { name: "좀비13", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
             { name: "좀비14", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
             { name: "좀비15", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비16", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비17", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비18", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비19", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비20", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비21", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비22", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비23", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비24", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비25", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비26", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비27", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비28", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비29", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            { name: "좀비30", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%8C%E1%85%A9%E1%86%B7%E1%84%87%E1%85%B5.png?alt=media&token=abca8366-8da7-401b-aaf6-47980cf50c20", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['zombie_attack','zombie_bite'], order: 2 },
+            
             { name: "엑스트라1", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
             { name: "엑스트라2", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
             { name: "엑스트라3", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
@@ -2009,7 +2083,27 @@ const loginStatusModal = document.getElementById('login-status-modal');
             { name: "엑스트라8", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
             { name: "엑스트라9", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
             { name: "엑스트라10", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
-        
+            { name: "엑스트라11", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라12", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라13", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라14", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라15", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라16", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라17", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라18", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라19", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라20", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라21", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라22", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라23", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라24", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라25", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라26", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라27", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라28", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라29", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            { name: "엑스트라30", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/image%2F%E1%84%89%E1%85%A1%E1%84%85%E1%85%A1%E1%86%B7.png?alt=media&token=60adb230-f1d5-4100-8c04-5313137da798", type: 'ENEMY', size: 1, bonusDamage: 5, moveRange: 1, skills: ['people_attack','sweep'], order: 2 },
+            
         ];
         [...pcData, ...enemyData].forEach(char => {
             const charPassword = char.type === 'PC' ? DEFAULT_PC_PASSWORD : ''; 
@@ -2102,6 +2196,8 @@ function stopTurnTimer() {
         roundPhase = data.roundPhase || 'PLAYER_PHASE';
         round = data.round || 1;
         maxRounds = data.maxRounds || 0;
+        // ▼▼▼ [추가] 서버에서 고요한 데미지 값을 실시간으로 받아옴 ▼▼▼
+        goyohanMaxDamage = data.goyohanMaxDamage || 0;
         isAdminMoveAllowed = data.isAdminMoveAllowed !== undefined ? data.isAdminMoveAllowed : true;
         foreshadowingAction = data.foreshadowingAction || null;
         boardBackgroundImage = data.boardBackgroundImage || '';
@@ -3218,9 +3314,15 @@ function isAttackPossible(attacker, target, attackRange) {
         
         // 최종 데미지 = (랜덤 공격력) + (캐릭터 고유 추가뎀) + (스킬 추가뎀)
         // 방어력(- finalDefense)은 제거되었습니다.
-       const finalDamage = Math.max(1, Math.round(finalAttack + (charBonus * 2)));
+       let finalDamage = Math.max(1, Math.round(finalAttack + (charBonus * 2)));
+        // ▼▼▼ [추가] 유한결 피격 데미지 2배 로직 ▼▼▼
+        if (defender.isBerserk) {
+            finalDamage = Math.round(finalDamage * 2);
+            await logAction(`⚠️ ${defender.name}은(는) 피해를 두 배로 입습니다!`, "damage");
+        }
+        // ▲▲▲ 추가 끝 ▲▲▲
 
-        // ▲▲▲ [여기까지가 수정된 코드입니다!] ▲▲▲
+        
         console.log(`공격자: ${attacker.name}, 주사위: ${baseAttack}, 공격스탯: ${charBonus}, 최종데미지: ${finalDamage}`);
 
         const newHp = await updateHP(defender, -finalDamage, "damage");
@@ -3495,25 +3597,47 @@ function triggerWallDestructionEffect(x, y) {
                 await logAction(`⚠️ 보호할 아군을 정확히 지정해야 합니다. (빈 땅 지정 불가)`, "system");
                 return; 
             }
-        // ★ [추가된 부분] 강하나 궁극기: 팝업창 띄우기!
+        // ★ [수정된 부분] 강하나 궁극기: 팝업창 대신 관리자 설정값 불러오기
         } else if (skillId === 'eoram') { 
             if (!target.id || target.id === attacker.id || target.type === attacker.type) {
                 await logAction(`⚠️ 적을 타겟으로 정확히 지정해야 합니다. (빈 땅 공격 불가)`, "system");
                 return; 
             }
-            // 브라우저 기본 팝업창을 띄워 값을 입력받습니다.
-            const inputVal = window.prompt("관리자 직접 입력: 고요한 캐릭터가 도출한 최대 공격값을 입력하세요. (숫자만 입력)", "0");
             
-            // 취소를 누르거나 문자를 입력하면 스킬 사용 취소 (궁극기 횟수 보존)
-            if (inputVal === null || inputVal.trim() === '' || isNaN(parseInt(inputVal))) {
-                await logAction(`⚠️ 올바르지 않은 값 입력으로 궁극기 사용이 취소되었습니다.`, "system");
-                return;
+            // 관리자가 패널에 값을 설정해두지 않았다면 스킬 취소 (횟수 보존)
+            if (goyohanMaxDamage <= 0) {
+                await logAction(`⚠️ 관리자가 아직 '고요한 최대 공격값'을 설정하지 않았습니다! 관리자에게 설정을 요청하세요.`, "system");
+                return; 
             }
-            // 입력한 값에 15를 더해서 최종 데미지로 저장합니다!
-            eoramBaseDamage = parseInt(inputVal) + 15;
+            
+            // 관리자가 설정한 값에 15를 더해서 최종 데미지로 확정!
+            eoramBaseDamage = goyohanMaxDamage + 15;
         }
         // ▲▲▲ 추가 끝 ▲▲▲
-        
+
+        // ▼▼▼ [추가] 임해신 궁극기 조건 검사 ▼▼▼
+        else if (skillId === 'derailment') {
+            if (attacker.hp > 20) {
+                await logAction(`⚠️ [탈선]은 체력이 20 이하일 때만 사용할 수 있습니다! (현재 체력: ${attacker.hp})`, "system");
+                return; // 조건 미달 시 궁극기 사용 취소
+            }
+        }
+        // ▲▲▲ 추가 끝 ▲▲▲
+
+        // ▼▼▼ [추가] 강진혁 궁극기: 타겟 유효성 및 감염 여부 검사 ▼▼▼
+        else if (skillId === 'find_usefulness') {
+            if (!target.id || target.id === attacker.id || target.type !== attacker.type) {
+                await logAction(`⚠️ 이탈시킬 다른 아군을 정확히 지정해야 합니다.`, "system");
+                return;
+            }
+            if (!target.statusEffects?.some(e => e.id === 'infected')) {
+                await logAction(`⚠️ 지정한 아군은 [확정 감염] 상태가 아닙니다! 감염이 확인된 대상에게만 사용할 수 있습니다.`, "system");
+                return;
+            }
+        }
+        // ▲▲▲ 추가 끝 ▲▲▲
+
+
         // [중요] 변수 선언 및 초기화
         let actionSucceeded = false;
         let affectedTargets = [];
@@ -3857,6 +3981,138 @@ function triggerWallDestructionEffect(x, y) {
         }
         // ▲▲▲ 강하나 궁극기 로직 끝 ▲▲▲
 
+        // ▼▼▼ [추가] 임해신 궁극기: 탈선 ▼▼▼
+        else if (skillId === 'derailment') {
+            // 1. 체력 5 차감
+            if (skill.hpCost > 0) {
+                await updateHP(attacker, -skill.hpCost, "damage");
+                await triggerCombatText(attacker, `-${skill.hpCost}`, 'damage');
+            }
+
+            await logAction(`🚂 ${attacker.name}이(가) 전장에서 이탈합니다!`, "system");
+
+            // 2. 맵에 있는 모든 적 3턴간 기절(스턴) 처리
+            const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
+            if (livingEnemies.length > 0) {
+                for (const enemy of livingEnemies) {
+                    await applyStatusEffect(enemy, { id: 'stunned', turns: 3 });
+                    affectedTargets.push(enemy); 
+                }
+                await logAction(`💫 ${attacker.name}의 돌발 행동에 당황한 적들이 3턴간 행동 불능 상태에 빠집니다!`, "system");
+            }
+
+            // 3. 본인 전장 이탈 처리 (보드에서 지움)
+            await delay(500);
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { x: null, y: null, hasActedThisRound: true });
+            
+            actionSucceeded = true;
+        }
+        // ▲▲▲ 임해신 궁극기 로직 끝 ▲▲▲
+
+
+        // ▼▼▼ [추가] 강진혁 궁극기: 쓸모를 찾아드립니다 ▼▼▼
+        else if (skillId === 'find_usefulness') {
+            await logAction(`🚷 ${attacker.name}이(가) ${target.name}의 쓸모를 찾아 전장에서 이탈시킵니다!`, "system");
+
+            // 1. 타겟 주변 1칸(3x3) 적 찾기
+            const enemiesInRange = characters.filter(c => 
+                c.type === 'ENEMY' && c.hp > 0 && c.x !== null &&
+                Math.abs(c.x - target.x) <= 1 && Math.abs(c.y - target.y) <= 1
+            );
+
+            // 2. 해당 적들 동반 이탈 처리
+            if (enemiesInRange.length > 0) {
+                for (const enemy of enemiesInRange) {
+                    await updateDoc(doc(db, 'games', gameId, 'characters', enemy.id), { x: null, y: null });
+                    await logAction(`🏃 ${enemy.name}이(가) ${target.name}에게 휘말려 전장에서 이탈했습니다!`, "system");
+                }
+            } else {
+                await logAction(`...하지만 ${target.name} 주변에 휘말릴 적이 없었습니다!`, "system");
+            }
+
+            // 3. 타겟(아군) 이탈 및 체력 20 차감
+            await delay(500);
+            const newTargetHp = Math.max(0, target.hp - 20);
+            await updateDoc(doc(db, 'games', gameId, 'characters', target.id), { x: null, y: null, hp: newTargetHp });
+            await triggerCombatText(target, "-20", "damage");
+            await logAction(`💀 ${target.name}은(는) 전장에서 밀려나며 20의 피해를 입었습니다.`, "damage");
+
+            // 4. 강진혁 페널티 (2턴 스턴, 민첩 1, 이동력 1 영구 하락)
+            await delay(500);
+            await applyStatusEffect(attacker, { id: 'stunned', turns: 3 }); // 이번 턴 종료 시 1이 깎이므로 3으로 설정
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { agility: 1, moveRange: 1 });
+            await logAction(`📉 ${attacker.name}은(는) 2턴간 행동 불능에 빠지며, 민첩이 1로 하락합니다.`, "system");
+
+            actionSucceeded = true;
+        }
+        // ▲▲▲ 강진혁 궁극기 로직 끝 ▲▲▲
+
+        // ▼▼▼ [추가] 백건우 궁극기: 멈추지 않으면 괜찮잖아! ▼▼▼
+        else if (skillId === 'dont_stop') {
+            // 1. 시전자(백건우) 체력 15 차감
+            if (skill.hpCost > 0) {
+                await updateHP(attacker, -skill.hpCost, "damage");
+                await triggerCombatText(attacker, `-${skill.hpCost}`, 'damage');
+            }
+
+            await logAction(`🏍️ ${attacker.name}이(가) "멈추지 않으면 괜찮잖아!"라고 외치며 맹렬하게 전장을 질주합니다!`, "system");
+
+            // 2. 맵에 살아있는 모든 적군 찾기
+            const livingEnemies = characters.filter(c => c.type === 'ENEMY' && c.hp > 0 && c.x !== null);
+
+            // 3. 모든 적군 동반 이탈 (맵에서 치움)
+            if (livingEnemies.length > 0) {
+                for (const enemy of livingEnemies) {
+                    await updateDoc(doc(db, 'games', gameId, 'characters', enemy.id), { x: null, y: null });
+                    await logAction(`🌪️ ${enemy.name}이(가) ${attacker.name}의 질주에 휩쓸려 전장에서 강제로 튕겨 나갔습니다!`, "system");
+                }
+            }
+
+            // 4. 본인도 전장 이탈
+            await delay(500);
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { x: null, y: null, hasActedThisRound: true });
+            await logAction(`💨 ${attacker.name}도 적들과 함께 전장 저 멀리로 사라집니다!`, "system");
+
+            // 5. 전투 강제 종료 처리
+            await delay(1000);
+            const gameResult = { title: "전투 종료", message: "백건우의 멈추지 않는 질주로 인해 모든 적이 쓸려나가 전투가 강제로 종료되었습니다." };
+            
+            // 타이머 중지 및 게임 상태 변경
+            stopTurnTimer(); 
+            await setDoc(doc(db, 'games', gameId), { 
+                gameState: 'ENDED',
+                gameResult: gameResult 
+            }, { merge: true });
+            
+            // 종료 결과창 띄우기
+            showGameSummaryModal(gameResult.title, gameResult.message);
+            
+            actionSucceeded = true;
+            return; // 전투가 종료되었으므로 여기서 함수 실행을 완전히 끝냄
+        }
+        // ▲▲▲ 백건우 궁극기 로직 끝 ▲▲▲
+
+        // ▼▼▼ [수정] 유한결 궁극기: 나영아, 앉아! ▼▼▼
+        else if (skillId === 'sit_nayoung') {
+            // 1. 궁극기 이벤트 서버 전송 (컷신 연출 시작)
+            // (이미 [1] 공통 로직에서 실행되므로 중복 코드가 있다면 삭제하세요)
+
+            await logAction(`🐕 ${attacker.name}: "나영아, 앉아!"`, "system");
+            await logAction(`🐾 나영이가 으르렁거리며 전투 태세를 갖춥니다!`, "system");
+
+            // 2. 캐릭터 문서에 버프 상태 및 궁극기 사용 여부 기록
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { 
+                isBerserk: true,
+                ultimateUsed: true
+            });
+
+            // 3. 연출용 텍스트
+            await triggerCombatText(attacker, "BERSERK!", "damage");
+            
+            // ★ [중요] 이 줄이 있어야 스킬 사용이 정상 완료됩니다!
+            actionSucceeded = true; 
+        }
+
         // [4] 이탈 관련 궁극기
         else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
             const hpPenalty = (skill.id === 'emergency_escape') ? 15 : 0; 
@@ -3895,11 +4151,17 @@ function triggerWallDestructionEffect(x, y) {
                 return false;
             };
 
-            let baseAttack = Math.floor(Math.random() * 10) + 1;
-           const charBonus = (attacker.bonusDamage !== undefined) ? attacker.bonusDamage : 5;
-            const effectiveMultiplier = skill.multiplier > 0 ? skill.multiplier : 1;
-        const tileDamage = Math.max(1, Math.round((baseAttack + charBonus * 2) * effectiveMultiplier));
+            // 1. 기본 데미지 계산 (재할당이 가능하도록 let으로 선언)
+        let baseAttack = Math.floor(Math.random() * 10) + 1;
+        const charBonus = (attacker.bonusDamage !== undefined) ? attacker.bonusDamage : 5;
+        const effectiveMultiplier = skill.multiplier > 0 ? skill.multiplier : 1;
+        
+        let tileDamage = Math.max(1, Math.round((baseAttack + charBonus * 2) * effectiveMultiplier));
 
+        // 2. [수정] 유한결 공격력 2배 로직: 계산이 끝난 tileDamage에 2배 곱하기!
+        if (attacker.isBerserk) {
+            tileDamage = tileDamage * 2;
+        }
             if (skill.isAoe) {
                 // ★ [수정] 사거리 0인 기술은 누구를 타겟으로 하든 '시전자 본인'을 중심으로 폭발!
                 const centerX = skill.range === 0 ? attacker.x : target.x;
@@ -5247,6 +5509,7 @@ function renderLoginStatus() {
                            <button id="delete-char-btn" class="w-full bg-red-900 hover:bg-red-800 font-bold py-3 px-4">영구 삭제</button>
                            <button id="copy-char-btn" class="w-full bg-blue-600 hover:bg-blue-700 font-bold py-3 px-4">캐릭터 복사</button>
                         </div>
+                        <button id="infect-char-btn" class="w-full bg-green-900 hover:bg-green-800 font-bold py-3 px-4 mt-2">🧟 [관리자] 확정 감염 마크 부여</button>
                        ` : ''}
                     </div>
             </div>
@@ -5293,6 +5556,16 @@ function renderLoginStatus() {
             if (copyBtn) {
                 copyBtn.onclick = () => copyCharacter(character);
             }
+
+            // ▼▼▼ [추가] 감염 버튼 기능 ▼▼▼
+            const infectBtn = document.getElementById('infect-char-btn');
+            if (infectBtn) {
+                infectBtn.onclick = async () => {
+                    await applyStatusEffect(character, { id: 'infected', turns: 99 });
+                    closeModal('profile-modal');
+                };
+            }
+            // ▲▲▲ 추가 끝 ▲▲▲
 
         if (isAdmin) {
             document.querySelectorAll('.remove-effect-btn').forEach(button => {
@@ -5474,6 +5747,20 @@ async function resetAllCharacterStats() {
                     <button id="save-max-rounds-btn" class="bg-indigo-600 p-2 px-4">저장</button>
                 </div>
             </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-700">
+                <label for="goyohan-max-dmg-input" class="block text-sm font-bold text-cyan-400">🌊 [특수] 고요한 최대 공격값 (강하나 於藍 스킬용)</label>
+                <p class="text-xs text-gray-400 mb-1">여기에 값을 미리 설정</p>
+                <div class="flex gap-2 mt-1">
+                    <input type="number" id="goyohan-max-dmg-input" class="form-input" value="${goyohanMaxDamage}">
+                    <button id="save-goyohan-dmg-btn" class="bg-indigo-600 hover:bg-indigo-500 p-2 px-4 font-bold">저장</button>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center">
+                <input type="checkbox" id="admin-move-toggle" class="form-checkbox h-5 w-5 text-purple-600 transition duration-150 ease-in-out" ${isAdminMoveAllowed ? 'checked' : ''}>
+
+
+
             <div class="mt-4 flex items-center">
                 <input type="checkbox" id="admin-move-toggle" class="form-checkbox h-5 w-5 text-purple-600 transition duration-150 ease-in-out" ${isAdminMoveAllowed ? 'checked' : ''}>
                 <label for="admin-move-toggle" class="ml-2 block text-sm text-gray-300 font-medium">관리자 토큰 이동 허용 (턴 무시)</label>
@@ -5704,6 +5991,16 @@ document.getElementById('force-enemy-phase-btn').onclick = async () => {
                 showCustomModal("설정 저장", `최대 라운드가 ${newMaxRounds > 0 ? newMaxRounds : '무한'}으로 설정되었습니다.`, [{text: "확인", class: "bg-indigo-600"}]);
             }
         };
+        // ▼▼▼ 여기에 고요한 저장 버튼 기능 추가 ▼▼▼
+        document.getElementById('save-goyohan-dmg-btn').onclick = async () => {
+            if (gameId) {
+                const val = parseInt(document.getElementById('goyohan-max-dmg-input').value) || 0;
+                await updateDoc(doc(db, 'games', gameId), { goyohanMaxDamage: val });
+                showCustomModal("설정 저장", `고요한의 최대 공격값이 ${val}로 설정되었습니다.`, [{text: "확인", class: "bg-indigo-600"}]);
+            }
+        };
+        // ▲▲▲ 추가 끝 ▲▲▲
+
         document.getElementById('reset-board-pos-btn').onclick = resetBoardPositions;
         document.getElementById('reset-all-game-btn').onclick = () => {
             showCustomModal("전체 초기화 경고", "모든 캐릭터, 맵 지형, 게임 로그가 완전히 초기화됩니다. 계속하시겠습니까?", [
