@@ -5625,6 +5625,10 @@ function renderLoginStatus() {
                             <div><label class="text-gray-400">민첩 (회피/도주 확률)</label><input id="edit-agility" type="number" class="form-input mt-1" value="${character.agility || 10}"></div>
                             <div><label class="text-gray-400">크기 (예: 1, 2)</label><input id="edit-size" type="number" class="form-input mt-1" value="${character.size || 1}"></div>
                         </div>
+                        <div class="mt-4 p-3 bg-red-900/30 border border-red-800/50 rounded-md flex items-center gap-3">
+                            <input id="edit-ultimate-used" type="checkbox" class="form-checkbox h-5 w-5 text-red-500" ${character.ultimateUsed ? 'checked' : ''}>
+                            <label for="edit-ultimate-used" class="text-red-300 font-bold">궁극기 사용 완료 처리 (체크 시 스킬 잠김)</label>
+                        </div>
                         <div class="flex items-center gap-2 pt-4 border-t border-gray-700/50">
                         </div>
                         <h4 class="text-lg font-bold text-gray-300 pt-4">스킬 선택</h4>
@@ -5658,6 +5662,9 @@ function renderLoginStatus() {
                     bonusDamage: parseInt(document.getElementById('edit-bonus-damage').value) || 0,
                     agility: parseInt(document.getElementById('edit-agility').value) || 10, // 민첩 추가
                     ultImage: document.getElementById('edit-ult-image').value.trim(),
+                    // ▼▼▼ [추가] 관리자가 설정한 궁극기 사용 여부 저장 ▼▼▼
+                    ultimateUsed: document.getElementById('edit-ultimate-used').checked,
+                    // ▲▲▲ 추가 끝 ▲▲▲
                     skills: [
                         document.getElementById('edit-skill-1').value, 
                         document.getElementById('edit-skill-2').value, 
