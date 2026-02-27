@@ -1971,6 +1971,21 @@ const combatTextStartTime = new Date();
         description: '2턴간 아군의 데미지를 대신 받으며 체력이 1 미만으로 떨어지지 않습니다. 사용 후 근력이 2로 영구 하락합니다.'
     },
 
+    // ▼▼▼ 강나리  ▼▼▼
+    'band_of_heart': { 
+        id: 'band_of_heart', 
+        name: '마음의 밴드', 
+        type: 'Support', 
+        range: 0,             // 제자리에서 바로 사용
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '🩹', 
+        category: 'Ultimate',
+        hpCost: 0,            // 스킬 자체 비용 대신 아래 로직에서 직접 -15를 처리합니다.
+        description: '체력이 제일 낮은 아군 2명을 20 회복시킵니다. 사용 후 자신의 체력이 15 감소하고, 민첩이 4, 이동력이 2로 영구 하락합니다.'
+    },
+
+
 };
 
     let SKILLS = {};
@@ -2089,7 +2104,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
         const batch = writeBatch(db);
         const pcData = [ 
                 
-                { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "강나리", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%82%E1%85%A1%E1%84%85%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=78dee10c-d89b-4ac2-b6d6-48450c064a3d", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EA%B0%95%EB%82%98%EB%A6%AC.png?alt=media&token=33b18465-cfa4-414b-bb03-2d6e9bcfadf2", type: 'PC', size: 1, bonusDamage: 3, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee','band_of_heart'], order: 1 },
                 { name: "강진혁", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%8C%E1%85%B5%E1%86%AB%E1%84%92%E1%85%A7%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=39f6416d-430d-44ab-8ca8-1c9d68b0fabf", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EA%B0%95%EC%A7%84%ED%98%81.png?alt=media&token=d5cafc19-ded3-41bd-ab8c-cad70edbe01c", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'find_usefulness'], order: 1 },
                 { name: "민현우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%EA%B0%95%EC%B4%88%EC%95%84%EB%91%90%EC%83%81.png?alt=media&token=65f87afc-2f30-4d95-b55e-0bd9fedf49ad", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EB%AF%BC%ED%98%84%EC%9A%B0.png?alt=media&token=2d51e645-e8f2-44bf-a250-38062858c02a", type: 'PC', size: 1, bonusDamage: 3, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee','retake'], order: 1 },
                 { name: "강하나", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A1%E1%86%BC%E1%84%92%E1%85%A1%E1%84%82%E1%85%A1_%E1%84%92%E1%85%AC%E1%84%80%E1%85%B1%E1%84%92%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=2c827152-46c8-48be-a7d3-dbb0bfd07aee", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EA%B0%95%ED%95%98%EB%82%98.png?alt=media&token=a3a8ffcb-1aed-4587-b54a-8a7400f74f65", type: 'PC', size: 1, bonusDamage: 8, moveRange: 3, agility: 6,  skills: ['move','basic_attack','evade','flee', 'eoram'], order: 1 },
@@ -3431,6 +3446,11 @@ function isAttackPossible(attacker, target, attackRange) {
         // 최종 데미지 = (랜덤 공격력) + (캐릭터 고유 추가뎀) + (스킬 추가뎀)
         // 방어력(- finalDefense)은 제거되었습니다.
        let finalDamage = Math.max(1, Math.round(finalAttack + (charBonus * 2)));
+        // ▼▼▼ [추가] 유한결 공격 데미지 2배 로직 (이 부분이 빠져있었습니다!) ▼▼▼
+        if (attacker.isBerserk) {
+            finalDamage = Math.round(finalDamage * 2);
+        }
+        // ▲▲▲ 추가 끝 ▲▲▲
         // ▼▼▼ [추가] 유한결 피격 데미지 2배 로직 ▼▼▼
         if (defender.isBerserk) {
             finalDamage = Math.round(finalDamage * 2);
@@ -4387,6 +4407,65 @@ function triggerWallDestructionEffect(x, y) {
         }
         // ▲▲▲ 추가 끝 ▲▲▲
 
+        // ▼▼▼ [추가] 강나리 궁극기: 마음의 밴드 ▼▼▼
+        else if (skillId === 'band_of_heart') {
+        
+            // 1. 살아있는 아군 중 '자신을 제외하고' 체력이 제일 낮은 2명 찾기
+            const allies = characters.filter(c => c.type === 'PC' && c.hp > 0 && c.id !== attacker.id);
+            allies.sort((a, b) => a.hp - b.hp); // 체력이 낮은 순서대로 오름차순 정렬
+            const targetsToHeal = allies.slice(0, 2); // 앞의 2명만 자르기
+
+            // 2. 선택된 아군들 회복 처리
+            if (targetsToHeal.length > 0) {
+                for (const healTarget of targetsToHeal) {
+                    const healAmount = 20;
+                    const maxHp = healTarget.maxHp || 100;
+                    const newHp = Math.min(maxHp, healTarget.hp + healAmount);
+                    
+                    await updateDoc(doc(db, 'games', gameId, 'characters', healTarget.id), { hp: newHp });
+                    
+                    // 화면에 +20 텍스트 띄우기
+                    if (typeof triggerCombatText === 'function') {
+                        await triggerCombatText(healTarget, `+${healAmount}`, 'heal');
+                    }
+                    await logAction(`✨ ${healTarget.name}의 체력이 크게 회복되었습니다! (현재 HP: ${newHp})`, "heal");
+                    
+                    affectedTargets.push(healTarget);
+                }
+            } else {
+                await logAction(`⚠️ 회복할 다른 아군이 없습니다.`, "system");
+            }
+
+            // 3. 강나리 본인 페널티 적용 (체력 -15, 민첩 4, 이동력 2로 영구 하락)
+            let nariNewHp = attacker.hp - 15;
+            let isDead = false;
+            
+            if (nariNewHp <= 0) {
+                nariNewHp = 0;
+                isDead = true; // 체력을 깎고 죽었는지 확인
+            }
+
+            // 스탯 하락 및 체력 감소 적용
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { 
+                hp: nariNewHp,
+                agility: 4,
+                moveRange: 2
+            });
+            
+            if (typeof triggerCombatText === 'function') {
+                await triggerCombatText(attacker, `-15`, 'damage');
+            }
+            await logAction(`🩸 ${attacker.name}이(가) 자신의 체력을 15 잃고, 민첩이 4로 하락했습니다.`, "damage");
+
+            // 페널티로 인해 사망했을 경우의 드라마틱한 처리
+            if (isDead) {
+                //await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { x: null, y: null });
+                await logAction(`💀 ${attacker.name}이(가) 동료들을 살려내고 마지막 힘을 다해 쓰러졌습니다...`, "damage");
+            }
+
+            actionSucceeded = true;
+        }
+        // ▲▲▲ 마음의 밴드 로직 끝 ▲▲▲
 
         // [4] 이탈 관련 궁극기
         else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
