@@ -1580,6 +1580,8 @@ const combatTextStartTime = new Date();
     covering: { id: 'covering', name: '도발', icon: '🦸' },
     // ▼▼▼ [추가] 윤태 스킬용 상태 (감염) ▼▼▼
     infected: { id: 'infected', name: '감염', icon: '🧟' },
+    // ▼▼▼ [추가] 범지태 스킬용 상태 (출혈) ▼▼▼
+    bleeding: { id: 'bleeding', name: '출혈', effectType: 'damage', value: 5, icon: '🩸' },
 };
 
     const STATUS_EFFECT_ICONS = {
@@ -1600,6 +1602,8 @@ const combatTextStartTime = new Date();
     covering: '🦸',
     // ▼▼▼ [추가] 윤태 스킬용 아이콘 ▼▼▼
     infected: '🧟',
+    // ▼▼▼ [추가] 범지태 스킬용 아이콘 ▼▼▼
+    bleeding: '🩸',
 };
     
     // NEW: Map/Board State Variables
@@ -1985,6 +1989,19 @@ const combatTextStartTime = new Date();
         description: '체력이 제일 낮은 아군 2명을 20 회복시킵니다. 사용 후 자신의 체력이 15 감소하고, 민첩이 4, 이동력이 2로 영구 하락합니다.'
     },
 
+    // ▼▼▼ [추가] 범지태 궁극기: Sector Clear ▼▼▼
+    'sector_clear': { 
+        id: 'sector_clear', 
+        name: 'Sector Clear', 
+        type: 'Attack', 
+        range: 1,             // 타겟팅 사거리 (필요에 따라 조절하세요)
+        rangeShape: 'square', 
+        multiplier: 0, 
+        icon: '💣', 
+        category: 'Ultimate',
+        hpCost: 0,
+        description: '적 1명에게 40의 피해를 입히고, 근처 적 2명에게 2라운드간 -5의 지속 피해를 줍니다. 본인은 체력 30을 잃고 1라운드간 행동 불능(도주 불가)이 됩니다.'
+    },
 
 };
 
@@ -2111,7 +2128,7 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 { name: "고요한", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%80%E1%85%A9%E1%84%8B%E1%85%AD%E1%84%92%E1%85%A1%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.PNG?alt=media&token=44657bc5-b2cd-43dc-822b-0fdf4c935b3a", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EA%B3%A0%EC%9A%94%ED%95%9C.png?alt=media&token=6d696661-6d53-4dee-a9eb-ea4e451d7560", type: 'PC', size: 1, bonusDamage: 10, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee', 'cheongchul'], order: 1 },
                 { name: "백건우", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%80%E1%85%A5%E1%86%AB%E1%84%8B%E1%85%AE_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=700d37d9-217f-4a82-9722-a2deec58abfb", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EB%B0%B1%EA%B1%B4%EC%9A%B0.png?alt=media&token=5c3a2280-df69-47bd-bfdf-e1635b4d8e14", type: 'PC', size: 1, bonusDamage: 5, moveRange: 3, agility: 6, skills: ['move','basic_attack','evade','flee', 'dont_stop'], order: 1 },
                 { name: "백람", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%87%E1%85%A2%E1%86%A8%E1%84%85%E1%85%A1%E1%86%B7_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=eb88eacb-2af5-48ef-b240-97464a6582c0", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EB%B0%B1%EB%9E%8C.png?alt=media&token=572eb48f-345c-4744-95b3-e4fc8f28b57d", type: 'PC', size: 1, bonusDamage: 4, moveRange: 5, agility: 10, skills: ['move','basic_attack','evade','flee', 'cliche_of_cliche'], order: 1 },
-                { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee'], order: 1 },
+                { name: "범지태", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/1st%2F%E1%84%87%E1%85%A5%E1%86%B7%E1%84%8C%E1%85%B5%E1%84%90%E1%85%A2_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7b73645d-1765-453a-b20a-e99ccb7a60cd", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EB%B2%94%EC%A7%80%ED%83%9C.png?alt=media&token=1853914b-f52e-4126-9e99-baebefad397e", type: 'PC', size: 1, bonusDamage: 10, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee','sector_clear'], order: 1 },
                 { name: "양희진", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%A3%E1%86%BC%E1%84%92%E1%85%B4%E1%84%8C%E1%85%B5%E1%86%AB_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=7f4bcf1f-b3be-4231-9d05-0fff868ee453", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EC%96%91%ED%9D%AC%EC%A7%84.png?alt=media&token=46a9d32f-ff6d-4c74-91bd-a15bb4d77df3", type: 'PC', size: 1, bonusDamage: 2, moveRange: 1, agility: 3, skills: ['move','basic_attack','evade','flee', 'protect_gamble'], order: 1 },
                 { name: "유재이", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%8C%E1%85%A2%E1%84%8B%E1%85%B5_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC2.png?alt=media&token=95dba849-4c66-4044-b0b2-e0bf9defcd19", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EC%9C%A0%EC%9E%AC%EC%9D%B4.png?alt=media&token=62fd27b3-5fdf-4ff8-a093-4c45df077305", type: 'PC', size: 1, bonusDamage: 6, moveRange: 2, agility: 4, skills: ['move','basic_attack','evade','flee','play_with_me'], order: 1 },
                 { name: "유한결", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8B%E1%85%B2%E1%84%92%E1%85%A1%E1%86%AB%E1%84%80%E1%85%A7%E1%86%AF_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=f128f6f3-5386-4295-8fc3-999da5636973", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EC%9C%A0%ED%95%9C%EA%B2%B0.png?alt=media&token=1872e7ab-af68-48cb-881c-f9fa825c3951", type: 'PC', size: 1, bonusDamage: 5, moveRange: 1, agility: 2, skills: ['move','basic_attack','evade','flee', 'sit_nayoung'], order: 1 },
@@ -2604,6 +2621,8 @@ function listenForCombatTextEvents(gameId) {
                 }
                 // ▲▲▲ 추가 끝 ▲▲▲
                 
+            
+
                 const charRef = doc(db, 'games', gameId, 'characters', char.id);
                 endOfRoundBatch.update(charRef, updates);
             });
@@ -4466,6 +4485,70 @@ function triggerWallDestructionEffect(x, y) {
             actionSucceeded = true;
         }
         // ▲▲▲ 마음의 밴드 로직 끝 ▲▲▲
+
+
+        // ▼▼▼ [수정] 범지태 궁극기: Sector Clear ▼▼▼
+        else if (skillId === 'sector_clear') {
+            if (!target || target.type !== 'ENEMY') {
+                await logAction(`⚠️ 공격할 적을 정확히 지정해야 합니다.`, "system");
+                // 컷신 방지
+                await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { ultimateUsed: false });
+                return;
+            }
+
+            // 1. 메인 타겟에게 40 데미지
+            let mainHp = Math.max(0, target.hp - 40);
+            await updateDoc(doc(db, 'games', gameId, 'characters', target.id), { hp: mainHp });
+            
+            if (typeof triggerCombatText === 'function') await triggerCombatText(target, `-40`, 'damage');
+            await logAction(`💥 ${target.name}에게 40의 치명적인 피해!`, "damage");
+            
+            if (mainHp === 0) {
+                await logAction(`💀 ${target.name}이(가) 산산조각 났습니다!`, "damage");
+            }
+            affectedTargets.push(target);
+
+            // 2. 메인 타겟 근처(거리 2칸 이내)의 다른 적 최대 2명 찾기
+            const nearbyEnemies = characters.filter(c => 
+                c.type === 'ENEMY' && 
+                c.hp > 0 && 
+                c.id !== target.id && 
+                getDistance(target, c) <= 5 
+            );
+            
+            const splashTargets = nearbyEnemies.slice(0, 2);
+
+            // [수정] 출혈 상태이상을 공식 시스템을 통해 안전하게 부여
+            for (const splashEnemy of splashTargets) {
+                await applyStatusEffect(splashEnemy, { id: 'bleeding', turns: 2, value: 5 });
+            }
+
+            // 3. 범지태 본인 페널티: 체력 -30 및 스턴 + 도주 불가
+            let jiTaeHp = attacker.hp - 30;
+            let isDead = false;
+            if (jiTaeHp <= 0) {
+                jiTaeHp = 0;
+                isDead = true;
+            }
+
+            // 체력 깎기
+            await updateDoc(doc(db, 'games', gameId, 'characters', attacker.id), { hp: jiTaeHp });
+            if (typeof triggerCombatText === 'function') await triggerCombatText(attacker, `-30`, 'damage');
+            
+            if (isDead) {
+                await logAction(`💀 ${attacker.name}이(가) 치명적인 반동을 버티지 못하고 쓰러졌습니다...`, "damage");
+            } else {
+                await logAction(`⚠️ 무리한 공격의 반동으로 ${attacker.name}이(가) 체력을 30 잃었습니다!`, "damage");
+                
+                // [수정] 턴을 2로 늘리고 도주 불가(cannot_flee) 효과를 함께 부여!
+                await applyStatusEffect(attacker, { id: 'stunned', turns: 2 });
+                await applyStatusEffect(attacker, { id: 'cannot_flee', turns: 99 });
+                await logAction(`💫 ${attacker.name}이(가) 1라운드간 행동 불능 및 도주 불가 상태가 됩니다.`, "system");
+            }
+
+            actionSucceeded = true;
+        }
+        // ▲▲▲ Sector Clear 로직 끝 ▲▲▲
 
         // [4] 이탈 관련 궁극기
         else if (skill.category === 'Ultimate' && (skill.id.includes('leave') || skill.id.includes('escape'))) {
