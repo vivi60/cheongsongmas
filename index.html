@@ -2141,7 +2141,8 @@ const loginStatusModal = document.getElementById('login-status-modal');
                 { name: "청록", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%A5%E1%86%BC%E1%84%85%E1%85%A9%E1%86%A8_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=bc725a00-316b-435c-b9e5-e09e61a8f816", ultImage: "", type: 'PC', size: 1, bonusDamage: 5, moveRange: 4, agility: 8, skills: ['move','basic_attack','evade','flee'], order: 1 },
                 { name: "최도화", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%8E%E1%85%AC%E1%84%83%E1%85%A9%E1%84%92%E1%85%AA_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=6c33dfc8-37f6-46c8-aab1-8f1ceab8df42", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%EC%B5%9C%EB%8F%84%ED%99%94.png?alt=media&token=b0c02b20-9879-42da-bb90-35aa1029c95b", type: 'PC', size: 1, bonusDamage: 2, moveRange: 3, agility: 7, skills: ['move','basic_attack','evade','flee', 'meridian_bind'], order: 1 },
                 { name: "한바다", img: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/2st%2F%E1%84%92%E1%85%A1%E1%86%AB%E1%84%87%E1%85%A1%E1%84%83%E1%85%A1_%E1%84%83%E1%85%AE%E1%84%89%E1%85%A1%E1%86%BC.png?alt=media&token=48917438-652f-4d42-b0bd-a5771fafcdf2", ultImage: "https://firebasestorage.googleapis.com/v0/b/cheongjuca.firebasestorage.app/o/skill%2F%ED%95%9C%EB%B0%94%EB%8B%A4.png?alt=media&token=0b487362-ad7f-470d-8333-a09d3b494154", type: 'PC', size: 1, bonusDamage: 4, moveRange: 1, agility: 1, skills: ['move','basic_attack','evade','flee','big_swell'], order: 1 },
-                
+                { name: "시나리오", img: "", ultImage: "", type: 'PC', size: 1, bonusDamage: 1, moveRange: 1, agility: 1, skills: ['move','basic_attack','evade','flee'], order: 1 },
+               
             
             
             
@@ -4456,7 +4457,7 @@ function triggerWallDestructionEffect(x, y) {
             }
 
             // 3. 강나리 본인 페널티 적용 (체력 -15, 민첩 4, 이동력 2로 영구 하락)
-            let nariNewHp = attacker.hp - 15;
+            let nariNewHp = attacker.hp - 20;
             let isDead = false;
             
             if (nariNewHp <= 0) {
@@ -4472,9 +4473,9 @@ function triggerWallDestructionEffect(x, y) {
             });
             
             if (typeof triggerCombatText === 'function') {
-                await triggerCombatText(attacker, `-15`, 'damage');
+                await triggerCombatText(attacker, `-20`, 'damage');
             }
-            await logAction(`🩸 ${attacker.name}이(가) 자신의 체력을 15 잃고, 민첩이 4로 하락했습니다.`, "damage");
+            await logAction(`🩸 ${attacker.name}이(가) 자신의 체력을 20 잃고, 민첩이 4로 하락했습니다.`, "damage");
 
             // 페널티로 인해 사망했을 경우의 드라마틱한 처리
             if (isDead) {
